@@ -187,6 +187,11 @@ button{cursor:pointer}
 .grip{width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center}
 #eTipo button[data-t="entrata"][aria-pressed="true"]{color:var(--income)}
 #eTipo button[data-t="investimento"][aria-pressed="true"]{color:var(--invest)}
+.tr{color:var(--muted)}
+@media (max-width:420px){#eTipo{display:grid;grid-template-columns:1fr 1fr}}
+.tlbl{width:22px;font-weight:600}
+#eTrasf .meta-row{flex-wrap:nowrap}
+#eTrasf .chips{flex:1;min-width:0;padding-bottom:0}
 .amt{display:flex;align-items:center;gap:12px}
 .amt .val{flex:1;min-width:0;text-align:right;font-family:var(--display);font-weight:700;font-size:44px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden}
 .amt .val small{font-size:26px;color:var(--muted);margin-right:4px}
@@ -227,6 +232,20 @@ button{cursor:pointer}
 .pop{animation:pop .35s ease}
 @media (prefers-reduced-motion: reduce){.sheet,.scrim{transition:none}.pop{animation:none}}
 @media (max-width:380px){.big{font-size:36px}.donut{grid-template-columns:120px 1fr}.donut .cw{height:120px}.tile .v{font-size:16px}.tab{font-size:10px}}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.eye{width:40px;height:40px;border-radius:12px;border:0;background:var(--hero-chip);color:var(--hero-ink);display:grid;place-items:center;flex:none}
+.eye svg{width:22px;height:22px}
+.split-l{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px}
+.split-l span{display:flex;align-items:center;gap:6px}
+.split-l i{width:10px;height:10px;border-radius:3px;display:block}
+.veiled{position:relative}
+.veiled .cw{filter:blur(10px);pointer-events:none;user-select:none}
+.veiled::after{content:"Importi nascosti";position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);background:var(--surface);color:var(--muted);font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;box-shadow:var(--shadow)}
+.lock{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;place-items:center;padding:24px 16px}
+.lock-in{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;max-width:320px}
+.lock-in img{border-radius:20px}
+.lock-in h2{font-family:var(--display);font-size:24px;margin:0}
+.lock-in .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 .nudge{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);border-left:4px solid var(--warn)}
 .nudge .tx{flex:1;min-width:0;font-size:14px}
 </style>
@@ -256,14 +275,20 @@ button{cursor:pointer}
 <div class="sheet" id="sheet" hidden>
   <form id="form" autocomplete="off">
     <div class="grip"></div>
-    <div class="seg" id="eTipo"><button type="button" data-t="spesa">Spesa</button><button type="button" data-t="entrata">Entrata</button><button type="button" data-t="investimento">Investimento</button></div>
+    <div class="seg" id="eTipo"><button type="button" data-t="spesa">Spesa</button><button type="button" data-t="entrata">Entrata</button><button type="button" data-t="investimento">Investimento</button><button type="button" data-t="trasferimento">Trasferimento</button></div>
     <div class="amt"><span class="ico lg" id="eIco">💶</span><div class="val num" id="eAmt" aria-live="polite"><small>€</small>0</div></div>
     <div class="cgrid" id="eCats"></div>
+    <div class="stack" id="eTrasf" hidden>
+      <div class="meta-row"><span class="small tlbl">Da</span><div class="chips" id="eDa"></div></div>
+      <div class="meta-row"><span class="small tlbl">A</span><div class="chips" id="eA"></div></div>
+      <p class="hint" id="eTrasfHint" hidden>Per trasferire servono almeno due conti. Aggiungi per esempio “Contanti” nella pagina Patrimonio.</p>
+    </div>
     <div class="meta-row">
       <button type="button" class="chip" data-d="0">Oggi</button>
       <button type="button" class="chip" data-d="1">Ieri</button>
       <input type="date" id="eDate" aria-label="Data">
     </div>
+    <div class="meta-row" id="eContoRow" hidden><span class="small" id="eContoLbl">Dal conto</span><div class="chips" id="eConti"></div></div>
     <input class="inp" id="eNote" placeholder="Nota (facoltativa)" maxlength="120">
     <label class="check" id="eRicL"><input type="checkbox" id="eRic"> Ripeti ogni mese (te lo ricordo nella pagina Mese)</label>
     <div class="keys" id="keys">
@@ -288,6 +313,8 @@ button{cursor:pointer}
     <div class="field"><span class="label">Icona</span><div class="emojis" id="cEmoji"></div></div>
     <div class="field"><span class="label">Colore</span><div class="swatches" id="cCols"></div></div>
     <label class="field" id="cBudgetF"><span class="label">Budget mensile (facoltativo)</span><input class="inp num" id="cBudget" inputmode="decimal" placeholder="es. 200"></label>
+    <label class="field" id="cSaldoF"><span class="label" id="cSaldoL">Saldo di oggi</span><input class="inp num" id="cSaldo" inputmode="decimal"><span class="small" id="cSaldoH"></span></label>
+    <label class="field" id="cVersF"><span class="label">Già versato prima di usare l’app (facoltativo)</span><input class="inp num" id="cVers" inputmode="decimal" placeholder="0"><span class="small">Serve a calcolare bene il guadagno: quanto avevi già messo in questo investimento prima di registrare i versamenti qui.</span></label>
     <div class="inline" id="cMove" hidden><button type="button" class="btn ghost" id="cUp">↑ Sposta su</button><button type="button" class="btn ghost" id="cDown">↓ Sposta giù</button></div>
     <div id="cDelZone"></div>
     <div class="actions"><button type="button" class="btn ghost" id="cCancel">Annulla</button><button type="submit" class="btn">Salva</button></div>
@@ -297,11 +324,21 @@ button{cursor:pointer}
 <div class="sheet" id="valSheet" hidden>
   <form id="valForm" autocomplete="off">
     <div class="grip"></div>
-    <div class="label" id="vTitle">Aggiorna i saldi</div>
-    <p class="hint">Scrivi quanto c’è adesso su ogni conto e quanto valgono i tuoi investimenti (il valore attuale, non quanto hai versato). Lascia vuoto un campo per non cambiarlo.</p>
+    <div class="label" id="vTitle">Allinea saldi e valori a oggi</div>
+    <p class="hint">Non serve farlo ogni mese: l’app aggiorna già i saldi con i movimenti che registri. Usalo quando vuoi correggere una differenza con la banca (per esempio movimenti non registrati) o aggiornare il valore di mercato degli investimenti. Lascia vuoto un campo per non cambiarlo.</p>
     <div class="stack" id="vList"></div>
     <div class="actions"><button type="button" class="btn ghost" id="vCancel">Annulla</button><button type="submit" class="btn">Salva i saldi</button></div>
   </form>
+</div>
+
+<div class="lock" id="lock" hidden>
+  <div class="lock-in">
+    <img src="icon-192.png" alt="" width="72" height="72">
+    <h2>Le mie spese</h2>
+    <p class="hint">App bloccata. Sbloccala con l’impronta o con il PIN del telefono.</p>
+    <button class="btn" id="unlockBtn" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11v3.5M8.5 9.5a3.5 3.5 0 0 1 7 0V14a7 7 0 0 1-1.2 3.9M6 12V9.5a6 6 0 0 1 12 0V12M9 14v1a6 6 0 0 0 1 3.4M3.5 9a9 9 0 0 1 17 0M18.5 16a10 10 0 0 1-.9 3"/></svg>Sblocca</button>
+    <p class="hint" id="lockMsg" aria-live="polite"></p>
+  </div>
 </div>
 
 <div class="toast" id="toast" hidden></div>
@@ -320,12 +357,12 @@ const HINTS={
   liquidita:[[/contant/,'💶'],[/carta|prepagat/,'💳'],[/deposit|risparm/,'🐷'],[/conto|banca|corrente/,'🏦']],
   investimento:[[/pension/,'🧓'],[/crypto|bitcoin|btc/,'🪙'],[/deposit|risparm|buoni|btp|obblig/,'🐷'],[/pac|etf|azion|fond|invest/,'📈']]
 };
-const DEF_ICON={spesa:'📦',entrata:'💰',liquidita:'🏦',investimento:'📈'};
+const DEF_ICON={spesa:'📦',entrata:'💰',liquidita:'🏦',investimento:'📈',trasferimento:'🔄'};
 const MESI=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const GIORNI=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
 const HEAT=[['#cde2fb','#0b0b0b'],['#9ec5f4','#0b0b0b'],['#6da7ec','#0b0b0b'],['#2a78d6','#ffffff'],['#184f95','#ffffff']];
 const COL_SPESE='#2a78d6',COL_ENTRATE='#1baf7a';
-const TIPI={spesa:{w:'spesa',ws:'spese',cat:'categoria di spesa'},entrata:{w:'entrata',ws:'entrate',cat:'categoria di entrata'},investimento:{w:'investimento',ws:'investimenti',cat:'investimento'},liquidita:{w:'conto',ws:'conti',cat:'conto'}};
+const TIPI={spesa:{w:'spesa',ws:'spese',cat:'categoria di spesa'},entrata:{w:'entrata',ws:'entrate',cat:'categoria di entrata'},investimento:{w:'investimento',ws:'investimenti',cat:'investimento'},liquidita:{w:'conto',ws:'conti',cat:'conto'},trasferimento:{w:'trasferimento',ws:'trasferimenti',cat:'trasferimento'}};
 
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -334,8 +371,10 @@ const todayStr=(off=0)=>{const d=new Date();d.setDate(d.getDate()-off);return d.
 const ymOf=s=>s.slice(0,7);
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const eur=c=>(c/100).toLocaleString('it-IT',{style:'currency',currency:'EUR'});
-const eur0=c=>(c/100).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+/* "always": anche 4.710 € con il punto delle migliaia (in italiano di norma parte da 10.000) */
+const EUR=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',useGrouping:'always'}),EUR0=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0,useGrouping:'always'});
+const eur=c=>EUR.format(c/100);
+const eur0=c=>EUR0.format(c/100);
 const sgn0=c=>(c<0?'−':'+')+eur0(Math.abs(c));
 const sum=a=>a.reduce((s,v)=>s+v.cent,0);
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -346,11 +385,16 @@ const ymLabel=ym=>cap(mName(ym))+' '+ym.slice(0,4);
 const ymShort=(ym,yr)=>mName(ym).slice(0,3)+(yr?" '"+ym.slice(2,4):'');
 function daysIn(ym){const[y,m]=ym.split('-').map(Number);return new Date(y,m,0).getDate()}
 function dayLabel(d){const dt=new Date(d+'T12:00:00');return cap(GIORNI[dt.getDay()])+' '+dt.getDate()+' '+MESI[dt.getMonth()]}
-function guessIcon(n,t='spesa'){n=String(n).toLowerCase();for(const[r,e]of HINTS[t])if(r.test(n))return e;return DEF_ICON[t]}
+function guessIcon(n,t='spesa'){n=String(n).toLowerCase();for(const[r,e]of HINTS[t]||[])if(r.test(n))return e;return DEF_ICON[t]||'📦'}
 function hashCol(n){let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))>>>0;return SW[h%SW.length]}
 const mkCat=(nome,i,t='spesa')=>({nome,icona:guessIcon(nome,t),colore:PAL[t][i%PAL[t].length],budget:0});
 const normCats=(a,t='spesa')=>a.map((c,i)=>typeof c==='string'?mkCat(c,i,t):{nome:String(c.nome),icona:c.icona||guessIcon(c.nome,t),colore:c.colore||PAL[t][i%PAL[t].length],budget:Number(c.budget)||0});
-const normConti=a=>(a||[]).filter(c=>c&&c.nome).map((c,i)=>{const t=c.tipo==='investimento'?'investimento':'liquidita';return {nome:String(c.nome),tipo:t,icona:c.icona||guessIcon(c.nome,t),colore:c.colore||PAL[t][i%PAL[t].length]}});
+const dayEnd=d=>new Date(d+'T23:59:59').getTime();
+const normRef=r=>r&&/^\d{4}-\d{2}-\d{2}$/.test(r.data)&&Number.isFinite(+r.cent)?{data:r.data,cent:Math.round(+r.cent),ts:+r.ts||dayEnd(r.data)}:null;
+const normConti=a=>(a||[]).filter(c=>c&&c.nome).map((c,i)=>{const t=c.tipo==='investimento'?'investimento':'liquidita';
+  const o={nome:String(c.nome),tipo:t,icona:c.icona||guessIcon(c.nome,t),colore:c.colore||PAL[t][i%PAL[t].length],storico:Array.isArray(c.storico)?c.storico.map(normRef).filter(Boolean):[]};
+  if(t==='investimento')o.versatoIniziale=Math.max(0,Math.round(+c.versatoIniziale||0));
+  return o});
 const tint=col=>`background:color-mix(in srgb, ${col} 18%, var(--surface))`;
 function parseAmount(s){
   if(typeof s==='number')return Math.round(Math.abs(s)*100);
@@ -364,10 +408,10 @@ function parseAmount(s){
 }
 
 /* ---------- state ---------- */
-const state={mesi:{},cats:normCats(DEF_NAMES),catsIn:normCats(DEF_IN,'entrata'),ric:[],pat:{conti:[],valori:{}},budget:0,mese:ymOf(todayStr()),view:'mese',filtro:null,tipoF:'tutti',q:'',db:'loading',importPreview:null,period:'12',catTrend:null,calDay:null,catTab:'spesa'};
+const state={mesi:{},cats:normCats(DEF_NAMES),catsIn:normCats(DEF_IN,'entrata'),ric:[],pat:{conti:[]},hide:false,budget:0,mese:ymOf(todayStr()),view:'mese',filtro:null,tipoF:'tutti',q:'',db:'loading',importPreview:null,period:'12',catTrend:null,calDay:null,catTab:'spesa'};
 state.lastBackup=null;state.persist=null;state.restore=null;
 let writeChain=Promise.resolve(),charts=[],lastView=null;
-const tipoOf=v=>v.tipo==='entrata'||v.tipo==='investimento'?v.tipo:'spesa';
+const tipoOf=v=>v.tipo==='entrata'||v.tipo==='investimento'||v.tipo==='trasferimento'?v.tipo:'spesa';
 const isIn=v=>v.tipo==='entrata';
 const voci=ym=>state.mesi[ym]||[];
 const ofTipo=(ym,t)=>voci(ym).filter(v=>tipoOf(v)===t);
@@ -379,10 +423,42 @@ function listOf(t){return t==='spesa'?state.cats:t==='entrata'?state.catsIn:stat
 const cat=(n,t='spesa')=>listOf(t).find(c=>c.nome.toLowerCase()===String(n).toLowerCase())||{nome:String(n),icona:guessIcon(n,t),colore:hashCol(n),budget:0};
 function monthTotals(ym,t='spesa'){const r={};voci(ym).forEach(v=>{if(tipoOf(v)===t)r[v.cat]=(r[v.cat]||0)+v.cent});return r}
 const rateOf=(inn,out)=>inn>0?Math.round((inn-out)/inn*100):null;
-/* patrimonio: valore di un conto alla fine di un mese = ultimo valore inserito in quel mese o prima */
-function valAt(nome,ym){const h=state.pat.valori[nome]||{};let best=null;for(const k in h)if(k<=ym&&(!best||k>best))best=k;return best?{cent:h[best],ym:best}:null}
-function totAt(ym,t){let s=0,any=false;state.pat.conti.filter(c=>c.tipo===t).forEach(c=>{const v=valAt(c.nome,ym);if(v){s+=v.cent;any=true}});return any?s:null}
-function versatoAt(nome,ym){return allVoci().filter(v=>tipoOf(v)==='investimento'&&(nome==null||v.cat===nome)&&ymOf(v.data)<=ym).reduce((s,v)=>s+v.cent,0)}
+/* ---------- patrimonio: uno solo, quello di oggi ----------
+   Ogni conto parte dall'ultimo saldo (o valore) inserito dall'utente e da lì si aggiorna da solo
+   con i movimenti registrati dopo: le entrate aumentano il conto su cui arrivano, spese e investimenti
+   diminuiscono il conto da cui escono, e ogni versamento aumenta l'investimento in cui va. */
+const liquidi=()=>state.pat.conti.filter(c=>c.tipo==='liquidita');
+const investimenti=()=>state.pat.conti.filter(c=>c.tipo==='investimento');
+function contoOf(v){const L=liquidi();return v.conto&&L.some(c=>c.nome===v.conto)?v.conto:(L[0]?L[0].nome:null)}
+/* conto di arrivo di un trasferimento (null se non esiste più) */
+const contoAOf=v=>v.contoA&&liquidi().some(c=>c.nome===v.contoA)?v.contoA:null;
+function deltaFor(acc,v){
+  const t=tipoOf(v);
+  if(acc.tipo==='investimento')return t==='investimento'&&v.cat===acc.nome?v.cent:0;
+  if(t==='trasferimento'){const da=contoOf(v),a=contoAOf(v);if(!a||da===a)return 0;return acc.nome===da?-v.cent:acc.nome===a?v.cent:0}
+  if(contoOf(v)!==acc.nome)return 0;
+  return t==='entrata'?v.cent:-v.cent;
+}
+const afterRef=(v,r)=>v.data>r.data||(v.data===r.data&&(v.ts||0)>r.ts);
+const refBefore=(a,b)=>a.data<b.data||(a.data===b.data&&a.ts<b.ts);
+function lastRef(acc,date){let r=null;for(const x of acc.storico)if(x.data<=date&&(!r||refBefore(r,x)))r=x;return r}
+function versato(acc,date=todayStr(),all=allVoci()){return (acc.versatoIniziale||0)+all.reduce((s,v)=>s+(tipoOf(v)==='investimento'&&v.cat===acc.nome&&v.data<=date?v.cent:0),0)}
+/* valore del conto alla fine del giorno `date`; null se è un conto senza saldo inserito */
+function valueAt(acc,date=todayStr(),all=allVoci()){
+  if(!acc.storico.length)return acc.tipo==='investimento'?versato(acc,date,all):null;
+  const r=lastRef(acc,date);
+  if(r)return r.cent+all.reduce((s,v)=>s+(afterRef(v,r)&&v.data<=date?deltaFor(acc,v):0),0);
+  const f=acc.storico.reduce((a,b)=>refBefore(a,b)?a:b);
+  const v=f.cent-all.reduce((s,x)=>s+(!afterRef(x,f)&&x.data>date?deltaFor(acc,x):0),0);
+  return acc.tipo==='investimento'?Math.max(0,v):v;
+}
+/* quanto è cambiato il conto per effetto dei movimenti dopo l'ultimo saldo inserito */
+function movSinceRef(acc,all=allVoci()){const r=lastRef(acc,todayStr());return r?all.reduce((s,v)=>s+(afterRef(v,r)&&v.data<=todayStr()?deltaFor(acc,v):0),0):0}
+function totale(tipo,date=todayStr(),all=allVoci()){let s=0,any=false;state.pat.conti.filter(c=>c.tipo===tipo).forEach(c=>{const v=valueAt(c,date,all);if(v!=null){s+=v;any=true}});return any?s:null}
+const versatoTot=(date=todayStr(),all=allVoci())=>investimenti().reduce((s,c)=>s+versato(c,date,all),0);
+/* importi del patrimonio: nascosti con l'occhio */
+const pm=c=>state.hide?'••••• €':eur(c);
+const pm0=c=>state.hide?'••••• €':eur0(c);
 
 /* ---------- archivio locale: IndexedDB, i dati non lasciano mai questo dispositivo ---------- */
 const IDB={db:null,
@@ -401,7 +477,7 @@ const configData=()=>({categorie:state.cats,entrate:state.catsIn.map(({budget,..
 function saveConfig(){return chain(()=>IDB.set('config',configData())).catch(e=>toast('Impostazioni non salvate. Riprova.'))}
 function savePat(){
   render();
-  return chain(()=>IDB.set('patrimonio',{conti:state.pat.conti,valori:state.pat.valori})).catch(e=>toast('Patrimonio non salvato. Riprova.'));
+  return chain(()=>IDB.set('patrimonio',{conti:state.pat.conti})).catch(e=>toast('Patrimonio non salvato. Riprova.'));
 }
 function applyConfig(v){
   state.cats=Array.isArray(v.categorie)&&v.categorie.length?normCats(v.categorie):normCats(DEF_NAMES);
@@ -410,7 +486,33 @@ function applyConfig(v){
   state.budget=Number(v.budget)||0;
   state.lastBackup=v.ultimoBackup||null;
 }
-function applyPat(p){state.pat={conti:normConti(p&&p.conti),valori:(p&&p.valori)||{}}}
+/* carica il patrimonio; i dati della versione precedente (un saldo per ogni mese) diventano punti di partenza */
+function applyPat(p){
+  const conti=normConti(p&&p.conti),val=(p&&p.valori)||{},cur=ymOf(todayStr());let migrated=false;
+  conti.forEach(c=>{const h=val[c.nome];if(c.storico.length||!h)return;migrated=true;
+    c.storico=Object.keys(h).sort().map(ym=>ym>=cur?{data:todayStr(),cent:h[ym],ts:Date.now()}:{data:ym+'-'+pad(daysIn(ym)),cent:h[ym],ts:dayEnd(ym+'-'+pad(daysIn(ym)))})});
+  state.pat={conti};
+  return migrated;
+}
+/* nuovo punto di partenza di un conto: il saldo (o valore) di oggi; sostituisce un eventuale inserimento dello stesso giorno */
+function addRef(acc,cent){const d=todayStr();acc.storico=acc.storico.filter(r=>r.data!==d);acc.storico.push({data:d,cent,ts:Date.now()})}
+const parseSigned=s=>(/^\s*[-−]/.test(s)?-1:1)*parseAmount(String(s).replace('−','-'));
+async function remapConto(from,to){
+  const hit=v=>v.conto===from||v.contoA===from;
+  const fix=v=>{const n={...v};if(n.conto===from)n.conto=to;if(n.contoA===from)n.contoA=to;return n};
+  for(const ym of Object.keys(state.mesi).sort())
+    if(voci(ym).some(hit))await saveMonth(ym,voci(ym).map(v=>hit(v)?fix(v):{...v}));
+  state.ric.forEach(r=>{if(r.conto===from)r.conto=to;if(r.contoA===from)r.contoA=to});
+}
+/* assegna esplicitamente un conto ai movimenti che non ce l'hanno (versioni precedenti), così riordinare o eliminare conti non li sposta */
+async function materializeConti(){
+  const L=liquidi();if(!L.length)return;
+  let mv=false,rc=false;
+  for(const ym of Object.keys(state.mesi))if(state.mesi[ym].some(v=>v.conto!==contoOf(v))){state.mesi[ym]=state.mesi[ym].map(v=>({...v,conto:contoOf(v)}));mv=true}
+  state.ric.forEach(r=>{const c=contoOf(r);if(r.conto!==c){r.conto=c;rc=true}});
+  if(mv)await chain(()=>IDB.set('mesi',state.mesi));
+  if(rc)await saveConfig();
+}
 const saveFor=t=>t==='spesa'||t==='entrata'?saveConfig():savePat();
 async function upsert(item,oldYm){
   const ym=ymOf(item.data);
@@ -432,19 +534,25 @@ async function init(){
     const [m,c,p]=await Promise.all([IDB.get('mesi'),IDB.get('config'),IDB.get('patrimonio')]);
     if(m)state.mesi=m;
     if(c)applyConfig(c);
-    if(p)applyPat(p);
+    if(p&&applyPat(p))await IDB.set('patrimonio',{conti:state.pat.conti});
+    await materializeConti();
+    const pr=await IDB.get('prefs');if(pr)state.hide=!!pr.nascondi;
+    const lk=await IDB.get('lock');
+    if(lk&&lk.credId){state.lock=lk;state.locked=true}
     state.db='ok';
   }catch(e){state.db='err'}
   render();
+  if(state.locked)unlock();
   // chiede a Chrome di non cancellare mai i dati di questa app quando lo spazio scarseggia
   try{if(navigator.storage&&navigator.storage.persist){state.persist=await navigator.storage.persisted();if(!state.persist)state.persist=await navigator.storage.persist();if(state.view==='altro')render()}}catch(_){}
 }
 
 /* ---------- render ---------- */
 function render(){
+  if(state.locked){charts.forEach(c=>c.destroy());charts=[];$('#main').innerHTML='';showLock(true);return}
   const v=state.view;
-  $('#title').textContent=v==='altro'?'Altro':v==='categorie'?'Categorie · '+ymShort(state.mese,true):ymLabel(state.mese);
-  $('#prev').hidden=$('#next').hidden=v==='altro';
+  $('#title').textContent=v==='altro'?'Altro':v==='patrimonio'?'Patrimonio':v==='categorie'?'Categorie · '+ymShort(state.mese,true):ymLabel(state.mese);
+  $('#prev').hidden=$('#next').hidden=v==='altro'||v==='patrimonio';
   $('#fab').hidden=v==='altro'||v==='patrimonio';
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.view===v));
   charts.forEach(c=>c.destroy());charts=[];
@@ -462,8 +570,14 @@ function ring(r){
   const col=r>1?'var(--ring-bad)':r>.85?'var(--ring-warn)':'var(--ring-ok)';
   return `<svg class="ring" viewBox="0 0 80 80" width="84" height="84" role="img" aria-label="${Math.round(r*100)}% del budget"><circle cx="40" cy="40" r="34" fill="none" stroke="var(--ring-track)" stroke-width="8"/>${p>0?`<circle cx="40" cy="40" r="34" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/>`:''}<text x="40" y="45" text-anchor="middle" fill="var(--hero-ink)" font-size="17" font-weight="700">${Math.round(r*100)}%</text></svg>`;
 }
-const amtCls=t=>t==='entrata'?'in':t==='investimento'?'inv':'';
-const amtTxt=(t,c)=>(t==='entrata'?'+':t==='investimento'?'→ ':'')+eur(c);
+const amtCls=t=>t==='entrata'?'in':t==='investimento'?'inv':t==='trasferimento'?'tr':'';
+const amtTxt=(t,c)=>(t==='entrata'?'+':t==='investimento'?'→ ':t==='trasferimento'?'⇄ ':'')+eur(c);
+/* icona e colore di un movimento; per i trasferimenti quelli del conto di arrivo (es. 💶 Contanti) */
+function iconOf(v){
+  if(tipoOf(v)==='trasferimento'){const d=liquidi().find(c=>c.nome===v.contoA);return d?{icona:d.icona,colore:d.colore}:{icona:'🔄',colore:'#64748b'}}
+  return cat(v.cat,tipoOf(v));
+}
+const trasfLabel=v=>`${contoOf(v)||'?'} → ${contoAOf(v)||'?'}`;
 
 /* ----- Mese ----- */
 function pendingRic(ym){
@@ -489,7 +603,7 @@ function viewMese(){
 
   const pend=pendingRic(ym);
   const ricCard=pend.length?`<section class="card"><div class="sec-h" style="padding:0 0 4px"><h2>Da registrare a ${mName(ym)}</h2>${pend.length>1?`<button class="link" data-ricall>Registra tutti</button>`:''}</div>
-    ${pend.map(r=>{const c=cat(r.cat,r.tipo);return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||r.cat)}</b><span class="small">${cap(TIPI[r.tipo].w)} · ogni mese il giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="mini" data-ricdo="${r.id}">Registra</button></div>`}).join('')}</section>`:'';
+    ${pend.map(r=>{const c=iconOf(r);return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||(r.tipo==='trasferimento'?trasfLabel(r):r.cat))}</b><span class="small">${cap(TIPI[r.tipo].w)} · ogni mese il giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="mini" data-ricdo="${r.id}">Registra</button></div>`}).join('')}</section>`:'';
 
   if(!voci(ym).length)return `<div class="view">${hero}${ricCard}<div class="card empty"><strong>Niente a ${mName(ym)}</strong>Tocca “+ Aggiungi” per segnare una spesa, un’entrata o un investimento. Hai un backup o un file Excel? Lo carichi da Altro.</div></div>`;
 
@@ -509,7 +623,7 @@ function viewMese(){
       <span class="bar"><i style="width:${(a/max*100).toFixed(1)}%;background:${c.colore}"></i></span></span></button>`}).join('')}</div></section>`;
   }else state.filtro=null;
 
-  const tf=[['tutti','Tutti'],['spesa','Spese'],['entrata','Entrate'],['investimento','Investimenti']].map(([k,l])=>`<button class="chip" data-tf="${k}" aria-pressed="${state.tipoF===k&&!state.filtro}">${l}</button>`).join('');
+  const tf=[['tutti','Tutti'],['spesa','Spese'],['entrata','Entrate'],['investimento','Investimenti'],...(liquidi().length>1||ofTipo(ym,'trasferimento').length?[['trasferimento','Trasferimenti']]:[])].map(([k,l])=>`<button class="chip" data-tf="${k}" aria-pressed="${state.tipoF===k&&!state.filtro}">${l}</button>`).join('');
   const age=backupAge(),nudge=age===null||age>30?`<div class="nudge"><span class="tx">${age===null?'Non hai ancora fatto un backup.':`Ultimo backup ${age} giorni fa.`} I dati sono solo su questo telefono: salvane una copia.</span><button class="mini" data-backup>Backup</button></div>`:'';
   return `<div class="view">${hero}${tiles}${nudge}${ricCard}${cats}
     <section class="stack"><div class="sec-h"><h2>${state.filtro?esc(state.filtro):'Movimenti'}</h2></div>
@@ -524,12 +638,16 @@ function listHtml(){
     .slice().sort((a,b)=>b.data.localeCompare(a.data)||(b.ts||0)-(a.ts||0));
   if(!shown.length)return `<p class="hint" style="padding:12px 6px">Nessun movimento${q?` per “${esc(state.q)}”`:''}.</p>`;
   const groups=[];shown.forEach(v=>{const g=groups[groups.length-1];if(g&&g.d===v.data)g.items.push(v);else groups.push({d:v.data,items:[v]})});
+  const multi=liquidi().length>1;
   return groups.map(g=>{
     const parts=[];const o=sum(g.items.filter(v=>tipoOf(v)==='spesa')),i=sum(g.items.filter(isIn)),n=sum(g.items.filter(v=>tipoOf(v)==='investimento'));
     if(o)parts.push(eur(o));if(i)parts.push(`<span class="in">+${eur(i)}</span>`);if(n)parts.push(`<span class="inv">→ ${eur(n)}</span>`);
     return `<div class="day-h"><span>${dayLabel(g.d)}</span><span class="num">${parts.join(' · ')}</span></div>
-    <div class="rows">${g.items.map(v=>{const t=tipoOf(v),c=cat(v.cat,t);return `<button class="row" data-id="${v.id}"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span>
-      <span class="tx"><span class="c">${esc(v.nota||v.cat)}</span>${v.nota?`<span class="n">${esc(v.cat)}${v.ric?' · ogni mese':''}</span>`:v.ric?'<span class="n">ogni mese</span>':''}</span><span class="a num ${amtCls(t)}">${amtTxt(t,v.cent)}</span></button>`}).join('')}</div>`}).join('');
+    <div class="rows">${g.items.map(v=>{const t=tipoOf(v),c=iconOf(v),tr=t==='trasferimento';
+      const title=tr?(v.nota||trasfLabel(v)):(v.nota||v.cat);
+      const sub=(tr?[v.nota?trasfLabel(v):'Trasferimento',v.ric?'ogni mese':'']:[v.nota?v.cat:'',multi?contoOf(v):'',v.ric?'ogni mese':'']).filter(Boolean).map(esc).join(' · ');
+      return `<button class="row" data-id="${v.id}"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span>
+      <span class="tx"><span class="c">${esc(title)}</span>${sub?`<span class="n">${sub}</span>`:''}</span><span class="a num ${amtCls(t)}">${amtTxt(t,v.cent)}</span></button>`}).join('')}</div>`}).join('');
 }
 
 /* ----- Grafici ----- */
@@ -611,41 +729,64 @@ function calendarCard(){
     <div class="ramp"><span>meno</span>${HEAT.map(h=>`<i style="background:${h[0]}"></i>`).join('')}<span>più</span></div><div class="calinfo">${info}</div></section>`;
 }
 
-/* ----- Patrimonio ----- */
-function contoRow(c,ym){
-  const v=valAt(c.nome,ym);
-  let right=v?eur(v.cent):'—',sub;
+/* ----- Patrimonio: uno solo, quello di oggi ----- */
+const eye=h=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${h?'<path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-3 3.6M6.4 6.5A17 17 0 0 0 3 12s4 6 9 6a9.6 9.6 0 0 0 4.6-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>':'<path d="M3 12s4-6 9-6 9 6 9 6-4 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="3"/>'}</svg>`;
+const shortDate=d=>{const x=new Date(d+'T12:00:00');return x.getDate()+' '+MESI[x.getMonth()].slice(0,3)+(d.slice(0,4)!==todayStr().slice(0,4)?' '+d.slice(0,4):'')};
+const pct=(a,b)=>{const p=Math.round(a/b*1000)/10;return (p>=0?'+':'−')+Math.abs(p).toLocaleString('it-IT')+'%'};
+const signEur0=c=>(c>=0?'+':'−')+eur0(Math.abs(c));
+function contoRow(c,all){
+  const today=todayStr(),v=valueAt(c,today,all),r=lastRef(c,today);let sub;
   if(c.tipo==='investimento'){
-    const vers=versatoAt(c.nome,ym);
-    if(v&&vers){const g=v.cent-vers,p=Math.round(g/vers*1000)/10;sub=`<span class="small ${g>=0?'good':'bad'} num">Versati ${eur0(vers)} · ${g>=0?'+':'−'}${eur0(Math.abs(g))} (${g>=0?'+':'−'}${Math.abs(p).toLocaleString('it-IT')}%)</span>`}
-    else sub=`<span class="small num">${vers?`Versati ${eur0(vers)}`:'Nessun versamento registrato'}${v?'':' · valore da inserire'}</span>`;
-  }else sub=`<span class="small">${v?(v.ym===ym?`Aggiornato a ${mName(ym)}`:`Ultimo saldo: ${mName(v.ym)} ${v.ym.slice(0,4)}`):'Saldo da inserire'}</span>`;
-  return `<button class="crow" data-conto="${esc(c.nome)}"><span class="ico" style="${tint(c.colore)}">${c.icona}</span><span class="cmain"><span class="ctop"><b>${esc(c.nome)}</b><span class="num">${right}</span></span>${sub}</span><span class="chev">›</span></button>`;
+    const vers=versato(c,today,all);
+    if(!r)sub=`<span class="small num">${vers?`${state.hide?'':'Versati '+eur0(vers)+' · '}inserisci il valore di mercato per vedere il rendimento`:'Nessun versamento registrato'}</span>`;
+    else if(!vers)sub=`<span class="small">Valore inserito il ${shortDate(r.data)} · indica quanto avevi già versato per vedere il guadagno</span>`;
+    else{const g=v-vers;sub=`<span class="small ${g>=0?'good':'bad'} num">${state.hide?`Rendimento ${pct(g,vers)}`:`Versati ${eur0(vers)} · ${signEur0(g)} (${pct(g,vers)})`}</span>`}
+  }else{
+    if(!r)sub=`<span class="small warn">Tocca per inserire il saldo di oggi</span>`;
+    else{const m=movSinceRef(c,all);sub=`<span class="small num">Saldo inserito il ${shortDate(r.data)}${m?(state.hide?' · aggiornato con i movimenti':` · ${m>0?'+':'−'}${eur(Math.abs(m))} di movimenti`):''}</span>`}
+  }
+  return `<button class="crow" data-conto="${esc(c.nome)}"><span class="ico" style="${tint(c.colore)}">${c.icona}</span><span class="cmain"><span class="ctop"><b>${esc(c.nome)}</b><span class="num">${v==null?'—':pm(v)}</span></span>${sub}</span><span class="chev">›</span></button>`;
 }
+/* mesi dei grafici: dal primo dato (movimento o saldo inserito) a oggi, al massimo 12 */
+function patMonths(){
+  const cur=ymOf(todayStr());let first=cur;
+  Object.keys(state.mesi).forEach(k=>{if(voci(k).length&&k<first)first=k});
+  state.pat.conti.forEach(c=>c.storico.forEach(r=>{if(ymOf(r.data)<first)first=ymOf(r.data)}));
+  const out=[];let m=cur;while(out.length<12&&m>=first){out.unshift(m);m=shiftYm(m,-1)}
+  return out;
+}
+const monthEnd=m=>m===ymOf(todayStr())?todayStr():m+'-'+pad(daysIn(m));
 function viewPatrimonio(){
-  const ym=state.mese,conti=state.pat.conti,cur=ymOf(todayStr());
-  if(!conti.length)return `<div class="view"><div class="card empty"><strong>Tieni d’occhio il tuo patrimonio</strong>Aggiungi i tuoi conti (conto corrente, contanti, conto deposito) e i tuoi investimenti (PAC, ETF, fondo pensione). Poi una volta al mese aggiorni i saldi e vedi come cresce tutto nel tempo.</div><button class="newcat" data-newconto><span style="font-size:22px">+</span> Aggiungi il primo conto</button></div>`;
-  const liq=totAt(ym,'liquidita'),inv=totAt(ym,'investimento'),tot=(liq||0)+(inv||0),has=liq!=null||inv!=null;
-  const pYm=shiftYm(ym,-1),pl=totAt(pYm,'liquidita'),pi=totAt(pYm,'investimento'),ptot=(pl||0)+(pi||0),phas=pl!=null||pi!=null;
-  const d=tot-ptot;
-  const vers=versatoAt(null,ym);
-  const hero=`<section class="hero pat"><div><div class="label">Patrimonio ${ym===cur?'oggi':'a fine '+mName(ym)}</div><div class="big num">${has?eur(tot):'—'}</div>
-    ${has&&phas&&d!==0?`<span class="pill num">${d>0?'+':'−'}${eur0(Math.abs(d))} rispetto a ${mName(pYm)}</span>`:has?'':'<div class="avg">Inserisci i saldi per vedere il totale</div>'}</div>
-    ${has?`<div class="foot"><div class="split">${liq?`<i style="flex:${liq};background:var(--ring-ok)"></i>`:''}${inv?`<i style="flex:${inv};background:#C9B8FF"></i>`:''}</div></div>`:''}</section>`;
+  const conti=state.pat.conti,today=todayStr(),all=allVoci();
+  if(!conti.length)return `<div class="view"><div class="card empty"><strong>Il tuo patrimonio in un colpo d’occhio</strong>Aggiungi i tuoi conti (conto corrente, contanti) con il saldo di oggi e i tuoi investimenti (PAC, ETF, fondo pensione). Da lì l’app li aggiorna da sola con le entrate, le spese e i versamenti che registri.</div><button class="newcat" data-newconto><span style="font-size:22px">+</span> Aggiungi il primo conto</button></div>`;
+  const L=liquidi(),I=investimenti(),missing=L.filter(c=>!c.storico.length);
+  const liq=totale('liquidita',today,all),inv=totale('investimento',today,all),tot=(liq||0)+(inv||0),has=liq!=null||inv!=null;
+  const pYm=shiftYm(ymOf(today),-1),pDate=pYm+'-'+pad(daysIn(pYm));
+  const ptot=(totale('liquidita',pDate,all)||0)+(totale('investimento',pDate,all)||0);
+  const hadData=Object.keys(state.mesi).some(k=>k<=pYm&&voci(k).length)||conti.some(c=>c.storico.some(r=>r.data<=pDate));
+  const d=tot-ptot,vers=versatoTot(today,all),market=I.some(c=>c.storico.length),g=(inv||0)-vers;
+  const pill=has&&hadData&&d!==0?`<span class="pill num">${state.hide?(ptot>0?pct(d,ptot):'In crescita'):signEur0(d)} da inizio ${mName(ymOf(today))}</span>`:'';
+  const pos=Math.max(0,liq||0)+Math.max(0,inv||0);
+  const hero=`<section class="hero pat"><div style="grid-column:1/-1"><div class="hero-top"><div class="label">Il tuo patrimonio oggi</div><button class="eye" type="button" data-eye aria-pressed="${state.hide}" aria-label="${state.hide?'Mostra gli importi':'Nascondi gli importi'}">${eye(state.hide)}</button></div>
+    <div class="big num">${has?pm(tot):'—'}</div>${pill}${has?'':'<div class="avg">Inserisci il saldo dei tuoi conti per vedere il totale</div>'}</div>
+    ${has&&pos>0?`<div class="foot"><div class="split">${liq>0?`<i style="flex:${liq};background:var(--ring-ok)"></i>`:''}${inv>0?`<i style="flex:${inv};background:#C9B8FF"></i>`:''}</div>
+      <div class="split-l"><span><i style="background:var(--ring-ok)"></i>Liquidità ${Math.round(Math.max(0,liq||0)/pos*100)}%</span><span><i style="background:#C9B8FF"></i>Investimenti ${Math.round(Math.max(0,inv||0)/pos*100)}%</span></div></div>`:''}</section>`;
+  const invSub=!I.length?'nessun investimento':market&&vers?(state.hide?`${pct(g,vers)} sul versato`:`${signEur0(g)} sul versato`):!vers?'versato non indicato':(state.hide?'valore = versato':`versati ${eur0(vers)}`);
   const tiles=`<div class="tiles two">
-    <div class="tile"><div class="label">Liquidità</div><div class="v num">${liq!=null?eur0(liq):'—'}</div><div class="s">${has&&tot?Math.round((liq||0)/tot*100)+'% del totale':'conti e contanti'}</div></div>
-    <div class="tile"><div class="label">Investimenti</div><div class="v num inv">${inv!=null?eur0(inv):'—'}</div><div class="s">${inv!=null&&vers?`${inv-vers>=0?'+':'−'}${eur0(Math.abs(inv-vers))} sul versato`:has&&tot?Math.round((inv||0)/tot*100)+'% del totale':'valore attuale'}</div></div></div>`;
-  const L=conti.filter(c=>c.tipo==='liquidita'),I=conti.filter(c=>c.tipo==='investimento');
-  const anyVal=Object.keys(state.pat.valori).length>0;
+    <div class="tile"><div class="label">Liquidità</div><div class="v num">${liq!=null?pm0(liq):'—'}</div><div class="s ${missing.length?'warn':''}">${missing.length?`${missing.length} ${missing.length===1?'conto':'conti'} senza saldo`:'segue i movimenti'}</div></div>
+    <div class="tile"><div class="label">Investimenti</div><div class="v num inv">${inv!=null?pm0(inv):'—'}</div><div class="s ${market&&vers?(g>=0?'good':'neg'):''}">${invSub}</div></div></div>`;
+  const months=patMonths(),veil=state.hide?' veiled':'';
   return `<div class="view">${hero}${tiles}
-    <button class="btn invb" data-aggiorna>Aggiorna i saldi di ${mName(ym)}</button>
-    <section class="card" style="padding:8px"><div class="sec-h" style="padding:8px 8px 4px"><h2>Liquidità</h2></div><div class="clist">${L.length?L.map(c=>contoRow(c,ym)).join(''):'<p class="hint" style="padding:8px">Nessun conto. Aggiungi il conto corrente o i contanti.</p>'}</div></section>
-    <section class="card" style="padding:8px"><div class="sec-h" style="padding:8px 8px 4px"><h2>Investimenti</h2></div><div class="clist">${I.length?I.map(c=>contoRow(c,ym)).join(''):'<p class="hint" style="padding:8px">Nessun investimento. Aggiungi PAC, ETF, fondo pensione…</p>'}</div>
-      <p class="hint" style="padding:4px 8px 8px">I versamenti si registrano con “+ Aggiungi → Investimento” nella pagina Mese; il valore attuale lo aggiorni tu con il pulsante qui sopra.</p></section>
-    <button class="newcat" data-newconto><span style="font-size:22px">+</span> Nuovo conto o investimento</button>
-    ${anyVal?`<section class="card"><h3>Patrimonio nel tempo</h3><p class="sub">Saldi a fine mese degli ultimi 12 mesi. Se un mese non l’hai aggiornato, uso l’ultimo valore inserito.</p><div class="cw"><canvas id="chPat" aria-label="Patrimonio nel tempo" role="img"></canvas></div>
+    ${L.length>1?'<button class="btn" type="button" data-trasf>⇄ Preleva o trasferisci tra conti</button>':''}
+    ${missing.length?`<div class="nudge"><span class="tx">Inserisci il saldo di oggi di ${missing.map(c=>esc(c.nome)).join(', ')}: da lì l’app lo aggiorna da sola con i movimenti.</span><button class="mini" data-conto="${esc(missing[0].nome)}">Inserisci</button></div>`:''}
+    <section class="card" style="padding:8px"><div class="sec-h" style="padding:8px 8px 4px"><h2>Liquidità</h2></div><div class="clist">${L.length?L.map(c=>contoRow(c,all)).join(''):'<p class="hint" style="padding:8px">Nessun conto. Aggiungi il conto corrente o i contanti.</p>'}</div>
+      <p class="hint" style="padding:4px 8px 8px">Le entrate si sommano al conto su cui arrivano; spese e versamenti negli investimenti si tolgono dal conto da cui escono; un trasferimento (es. un prelievo) sposta i soldi da un conto all’altro senza cambiare il totale.</p></section>
+    <section class="card" style="padding:8px"><div class="sec-h" style="padding:8px 8px 4px"><h2>Investimenti</h2></div><div class="clist">${I.length?I.map(c=>contoRow(c,all)).join(''):'<p class="hint" style="padding:8px">Nessun investimento. Aggiungi PAC, ETF, fondo pensione…</p>'}</div>
+      <p class="hint" style="padding:4px 8px 8px">Ogni versamento (“+ Aggiungi → Investimento”) si somma qui. Il guadagno lo vedi quando inserisci il valore di mercato.</p></section>
+    <div class="inline"><button class="btn ghost" style="flex:1" type="button" data-aggiorna>Allinea saldi e valori</button><button class="btn ghost" style="flex:1" type="button" data-newconto>+ Nuovo conto</button></div>
+    ${has&&months.length>1?`<section class="card${veil}"><h3>Patrimonio nel tempo</h3><p class="sub">Valore a fine mese, ricostruito dai saldi inseriti e dai movimenti registrati.</p><div class="cw"><canvas id="chPat" aria-label="Patrimonio nel tempo" role="img"></canvas></div>
       <div class="legend row-l"><span class="lg"><i class="sw" style="background:var(--liquid)"></i>Liquidità</span><span class="lg"><i class="sw" style="background:var(--invest)"></i>Investimenti</span></div></section>`:''}
-    ${I.length&&(anyVal||vers)?`<section class="card"><h3>Investimenti: versato e valore</h3><p class="sub">Quanto hai versato in totale e quanto valgono gli investimenti. La distanza tra le due linee è il tuo guadagno (o la perdita).</p><div class="cw"><canvas id="chInv" aria-label="Versato e valore degli investimenti" role="img"></canvas></div>
+    ${I.length&&vers&&months.length>1?`<section class="card${veil}"><h3>Investimenti: versato e valore</h3><p class="sub">La distanza tra le due linee è il tuo guadagno (o la perdita). Il valore segue i versamenti e si corregge ogni volta che inserisci il valore di mercato.</p><div class="cw"><canvas id="chInv" aria-label="Versato e valore degli investimenti" role="img"></canvas></div>
       <div class="legend row-l"><span class="lg"><i class="ln dash" style="border-color:var(--faint)"></i>Versato</span><span class="lg"><i class="ln" style="border-color:var(--invest)"></i>Valore</span></div></section>`:''}
   </div>`;
 }
@@ -659,23 +800,24 @@ function drawCharts(animate){
   Chart.defaults.font.size=11;Chart.defaults.color=muted;
   const anim=animate?{}:{animation:false};
   const tip={backgroundColor:ink,titleColor:surf,bodyColor:surf,footerColor:surf,padding:10,cornerRadius:10,boxPadding:4,usePointStyle:true};
-  const euro=v=>v.toLocaleString('it-IT',{style:'currency',currency:'EUR'});
+  const euro=v=>EUR.format(v);
   const yAxis={beginAtZero:true,grid:{color:grid},border:{display:false},ticks:{maxTicksLimit:5,callback:v=>Math.abs(v)>=1000?(v/1000).toLocaleString('it-IT')+'k €':v+' €'}};
   const xAxis={grid:{display:false},border:{color:grid},ticks:{maxRotation:0,autoSkip:true,autoSkipPadding:6}};
   const base={...anim,responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false}};
   const el=id=>document.getElementById(id);
 
   if(el('chPat')||el('chInv')){
-    const months=Array.from({length:12},(_,i)=>shiftYm(state.mese,i-11)),yrs=new Set(months.map(m=>m.slice(0,4))).size>1,labels=months.map(m=>ymShort(m,yrs));
-    const liq=months.map(m=>totAt(m,'liquidita')),inv=months.map(m=>totAt(m,'investimento'));
-    const tm=it=>ymLabel(months[it[0].dataIndex]);
+    const all=allVoci(),months=patMonths(),yrs=new Set(months.map(m=>m.slice(0,4))).size>1,cur=ymOf(todayStr());
+    const labels=months.map(m=>m===cur?'oggi':ymShort(m,yrs)),dates=months.map(monthEnd);
+    const liq=dates.map(d=>totale('liquidita',d,all)),inv=dates.map(d=>totale('investimento',d,all));
+    const tm=it=>{const m=months[it[0].dataIndex];return m===cur?'Oggi':'Fine '+mName(m)+' '+m.slice(0,4)};
     if(el('chPat'))charts.push(new Chart(el('chPat'),{type:'bar',data:{labels,datasets:[
       {label:'Liquidità',data:liq.map(v=>v==null?null:v/100),backgroundColor:liqc,borderColor:surf,borderWidth:{top:2},borderRadius:4,borderSkipped:'bottom',maxBarThickness:30,stack:'p'},
       {label:'Investimenti',data:inv.map(v=>v==null?null:v/100),backgroundColor:invc,borderColor:surf,borderWidth:{top:2},borderRadius:4,borderSkipped:'bottom',maxBarThickness:30,stack:'p'}]},
       options:{...base,scales:{x:{...xAxis,stacked:true},y:{...yAxis,stacked:true}},plugins:{legend:{display:false},tooltip:{...tip,filter:c=>c.raw!=null,callbacks:{title:tm,label:c=>` ${c.dataset.label}: ${euro(c.raw)}`,
         footer:it=>{const i=it[0].dataIndex;return 'Totale: '+euro(((liq[i]||0)+(inv[i]||0))/100)}}}}}}));
     if(el('chInv')){
-      const vers=months.map(m=>versatoAt(null,m)/100);
+      const vers=dates.map(d=>versatoTot(d,all)/100);
       charts.push(new Chart(el('chInv'),{type:'line',data:{labels,datasets:[
         {label:'Valore',data:inv.map(v=>v==null?null:v/100),borderColor:invc,backgroundColor:invc,borderWidth:2,pointRadius:3,pointHoverRadius:5,pointBorderColor:surf,pointBorderWidth:2,tension:.2,spanGaps:true},
         {label:'Versato',data:vers,borderColor:faint,borderDash:[5,4],borderWidth:1.5,pointRadius:0,pointHoverRadius:4,stepped:true}]},
@@ -755,26 +897,27 @@ function viewAltro(){
   let prev='';
   if(p){
     const by=t=>p.items.filter(v=>tipoOf(v)===t);
-    const parts=[['spesa','spese'],['entrata','entrate'],['investimento','investimenti']].map(([t,w])=>{const a=by(t);return a.length?`<b>${a.length}</b> ${w} (${eur(sum(a))})`:''}).filter(Boolean);
+    const parts=[['spesa','spese'],['entrata','entrate'],['investimento','investimenti'],['trasferimento','trasferimenti']].map(([t,w])=>{const a=by(t);return a.length?`<b>${a.length}</b> ${w} (${eur(sum(a))})`:''}).filter(Boolean);
     prev=`<div class="preview stack">${p.error?esc(p.error):`<div>${parts.length?`Trovati ${parts.join(', ')}, dal ${esc(p.from)} al ${esc(p.to)}.`:'Nessun movimento nuovo.'}${p.dup?` ${p.dup} già presenti, li salto.`:''}${p.skipped?` ${p.skipped} righe ignorate (senza data o importo).`:''}</div>
       ${p.newCats.length?`<div>Nuove categorie o investimenti: ${p.newCats.map(c=>esc(c.nome)).join(', ')}</div>`:''}
       ${p.items.length?`<div class="inline"><button class="btn" id="doImport">Importa ${p.items.length} movimenti</button><button class="btn ghost" id="cancelImport">Annulla</button></div>`:''}`}</div>`;
   }
-  const ric=state.ric.length?state.ric.map(r=>{const c=cat(r.cat,r.tipo);return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||r.cat)}</b><span class="small">${cap(TIPI[r.tipo].w)} · ${esc(r.cat)} · giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="xbtn" data-ricdel="${r.id}" aria-label="Elimina ricorrente">×</button></div>`}).join('')
+  const ric=state.ric.length?state.ric.map(r=>{const c=iconOf(r),tr=r.tipo==='trasferimento';return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||(tr?trasfLabel(r):r.cat))}</b><span class="small">${cap(TIPI[r.tipo].w)} · ${esc(tr?trasfLabel(r):r.cat)} · giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="xbtn" data-ricdel="${r.id}" aria-label="Elimina ricorrente">×</button></div>`}).join('')
     :'<p class="hint">Nessuno. Quando aggiungi un movimento, spunta “Ripeti ogni mese” (utile per stipendio, affitto, abbonamenti, PAC).</p>';
   return `<div class="view">
     <section class="card stack"><div><h3>Budget mensile di spesa</h3><p class="sub" style="margin:0">Compare come anello nella pagina Mese. Lascia vuoto per non usarlo. I budget per singola categoria si impostano in Categorie.</p></div>
       <div class="inline"><input class="inp num" id="budget" inputmode="decimal" placeholder="es. 1500" value="${state.budget?centStr(state.budget):''}"><button class="btn" id="saveBudget">Salva</button></div></section>
     <section class="card"><h3>Movimenti ricorrenti</h3><p class="sub">Ogni mese compaiono nella pagina Mese con il pulsante “Registra”. Niente viene aggiunto da solo.</p>${ric}</section>
+    ${lockCard()}
     <section class="card stack"><div><h3>Backup e ripristino</h3><p class="sub" style="margin:0">I tuoi dati sono salvati solo in questo telefono. Fai un backup ogni tanto e copialo sul PC o su un cloud di tua scelta: se cambi o resetti il telefono, lo ripristini da qui.</p></div>
       <p class="hint">${(()=>{const a=backupAge();return a===null?'Non hai ancora fatto nessun backup.':a===0?'Ultimo backup: oggi.':`Ultimo backup: ${a} ${a===1?'giorno':'giorni'} fa.`})()} ${state.persist===true?'Chrome non cancellerà i dati dell’app.':state.persist===false?'Installa l’app sulla schermata Home per proteggere i dati dalla pulizia automatica di Chrome.':''}</p>
       <button class="btn" id="expJson">Fai il backup completo</button>
       <label class="field"><span class="label">Ripristina da un backup</span><input type="file" id="restoreFile" accept=".json,application/json"></label>
-      ${state.restore?`<div class="preview stack">${state.restore.error?esc(state.restore.error):`<div>Backup del ${new Date(state.restore.creato).toLocaleDateString('it-IT')}: <b>${state.restore.n}</b> movimenti e <b>${state.restore.conti}</b> conti. Ripristinandolo, i dati attuali di questa app vengono <b>sostituiti</b>.</div>
+      ${state.restore?`<div class="preview stack">${state.restore.error?esc(state.restore.error):`<div>Backup del ${new Date(state.restore.creato).toLocaleDateString('it-IT')}: <b>${state.restore.n}</b> ${state.restore.n===1?'movimento':'movimenti'} e <b>${state.restore.conti}</b> ${state.restore.conti===1?'conto':'conti'}. Ripristinandolo, i dati attuali di questa app vengono <b>sostituiti</b>.</div>
         <div class="inline"><button class="btn danger armed" id="doRestore">Sostituisci con il backup</button><button class="btn ghost" id="cancelRestore">Annulla</button></div>`}</div>`:''}</section>
     <section class="card stack"><div><h3>Esporta in Excel</h3><p class="sub" style="margin:0">Un file .xlsx con tutti i tuoi dati: Movimenti (spese e investimenti in negativo, entrate in positivo), Riepilogo mensile, Patrimonio e Categorie.</p></div>
       <button class="btn ghost" id="expXlsx">Scarica il file Excel</button>
-      <p class="hint num">${all.length?`${cnt('spesa')} spese, ${cnt('entrata')} entrate e ${cnt('investimento')} investimenti salvati, dal ${dayLabel(first).toLowerCase()} ${first.slice(0,4)}.`:'Ancora niente di salvato.'}</p></section>
+      <p class="hint num">${all.length?`${cnt('spesa')} spese, ${cnt('entrata')} entrate, ${cnt('investimento')} investimenti e ${cnt('trasferimento')} trasferimenti salvati, dal ${dayLabel(first).toLowerCase()} ${first.slice(0,4)}.`:'Ancora niente di salvato.'}</p></section>
     <section class="card stack"><div><h3>Importa da Excel o CSV</h3><p class="sub" style="margin:0">Va bene il tuo tracker_spese.xlsx o un file esportato da qui. Se le uscite sono in negativo, i positivi diventano entrate; le categorie della sezione Risparmio diventano investimenti. I movimenti già presenti vengono saltati.</p></div>
       <input type="file" id="file" accept=".xlsx,.xls,.csv,text/csv,text/plain">${prev}</section>
   </div>`;
@@ -790,28 +933,42 @@ const isOpen=id=>!$(id).hidden&&$(id).classList.contains('on');
 let draft=null;
 function openExpense(item,tipo){
   const cm=ymOf(todayStr());
-  draft=item?{tipo:tipoOf(item),amt:centStr(item.cent),cat:item.cat,data:item.data,nota:item.nota||'',editing:item,ric:false}
-    :{tipo:tipo||'spesa',amt:'',cat:(!tipo||tipo==='spesa')?state.filtro||null:null,data:state.mese===cm?todayStr():state.mese+'-01',nota:'',editing:null,ric:false};
+  draft=item?{tipo:tipoOf(item),amt:centStr(item.cent),cat:item.cat,data:item.data,nota:item.nota||'',editing:item,ric:false,conto:contoOf(item),contoA:contoAOf(item)}
+    :{tipo:tipo||'spesa',amt:'',cat:(!tipo||tipo==='spesa')?state.filtro||null:null,data:state.mese===cm?todayStr():state.mese+'-01',nota:'',editing:null,ric:false,conto:contoOf({}),contoA:null};
+  if(!draft.contoA)draft.contoA=defaultDest(draft.conto);
   if(!draft.cat&&draft.tipo!=='spesa'&&listOf(draft.tipo).length===1)draft.cat=listOf(draft.tipo)[0].nome;
   fillExpense();openS($('#sheet'));
 }
 function fillExpense(){
-  const t=draft.tipo,cats=listOf(t).slice();
-  if(draft.cat&&!cats.some(c=>c.nome===draft.cat))cats.push(cat(draft.cat,t));
+  const t=draft.tipo,cats=t==='trasferimento'?[]:listOf(t).slice();
+  if(t!=='trasferimento'&&draft.cat&&!cats.some(c=>c.nome===draft.cat))cats.push(cat(draft.cat,t));
   document.querySelectorAll('#eTipo button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));
   $('#eCats').classList.toggle('one',cats.length<4);
   $('#eCats').innerHTML=cats.map(c=>`<button type="button" class="ctile" data-c="${esc(c.nome)}" aria-pressed="${c.nome===draft.cat}"><span class="ico" style="${tint(c.colore)}">${c.icona}</span><span>${esc(c.nome)}</span></button>`).join('')
     +`<button type="button" class="ctile add" data-newcat><span class="ico">+</span><span>${t==='investimento'?'Nuovo':'Nuova'}</span></button>`;
   $('#eDate').value=draft.data;$('#eNote').value=draft.nota;
-  $('#eNote').placeholder=t==='entrata'?'Nota (facoltativa), es. stipendio ottobre':t==='investimento'?'Nota (facoltativa), es. versamento mensile':'Nota (facoltativa), es. Esselunga';
+  $('#eNote').placeholder=t==='entrata'?'Nota (facoltativa), es. stipendio ottobre':t==='investimento'?'Nota (facoltativa), es. versamento mensile':t==='trasferimento'?'Nota (facoltativa), es. prelievo bancomat':'Nota (facoltativa), es. Esselunga';
   $('#eDelete').hidden=!draft.editing;
   $('#eRicL').hidden=!!draft.editing;$('#eRic').checked=draft.ric;
+  const L=liquidi(),tr=t==='trasferimento';
+  $('#eCats').hidden=tr;$('#eTrasf').hidden=!tr;
+  if(tr)renderTrasf();
+  $('#eContoRow').hidden=L.length<2||tr;
+  $('#eContoLbl').textContent=t==='entrata'?'Sul conto':'Dal conto';
+  $('#eConti').innerHTML=L.map(c=>`<button type="button" class="chip" data-conto-e="${esc(c.nome)}" aria-pressed="${c.nome===draft.conto}">${c.icona} ${esc(c.nome)}</button>`).join('');
   updateExpense();
   const sel=$('#eCats [aria-pressed="true"]');if(sel)sel.scrollIntoView({block:'nearest',inline:'center'});
 }
+/* trasferimento: conto di arrivo proposto (i contanti, se ci sono: è il caso del prelievo) */
+function defaultDest(from){const o=liquidi().filter(c=>c.nome!==from);return (o.find(c=>/contant/i.test(c.nome))||o[0]||{}).nome||null}
+function renderTrasf(){
+  const L=liquidi(),chips=(sel,attr)=>L.map(c=>`<button type="button" class="chip" ${attr}="${esc(c.nome)}" aria-pressed="${c.nome===sel}">${c.icona} ${esc(c.nome)}</button>`).join('');
+  $('#eTrasfHint').hidden=L.length>=2;
+  $('#eDa').innerHTML=chips(draft.conto,'data-da');$('#eA').innerHTML=chips(draft.contoA,'data-a');
+}
 function updateExpense(){
-  const t=draft.tipo,c=draft.cat?cat(draft.cat,t):null;
-  $('#eIco').textContent=c?c.icona:(t==='entrata'?'💰':t==='investimento'?'📈':'💶');$('#eIco').style.cssText=c?tint(c.colore):'background:var(--sunk)';
+  const t=draft.tipo,tr=t==='trasferimento',c=tr?(draft.contoA?iconOf({tipo:t,contoA:draft.contoA}):null):draft.cat?cat(draft.cat,t):null;
+  $('#eIco').textContent=c?c.icona:(t==='entrata'?'💰':t==='investimento'?'📈':tr?'🔄':'💶');$('#eIco').style.cssText=c?tint(c.colore):'background:var(--sunk)';
   $('#eAmt').className='val num '+amtCls(t);
   $('#eAmt').innerHTML=`<small>${t==='entrata'?'+':''}€</small>${esc(draft.amt||'0')}`;
   document.querySelectorAll('.meta-row [data-d]').forEach(b=>b.setAttribute('aria-pressed',draft.data===todayStr(+b.dataset.d)));
@@ -831,9 +988,17 @@ $('#eTipo').addEventListener('click',e=>{
   draft.tipo=b.dataset.t;draft.nota=$('#eNote').value;draft.ric=$('#eRic').checked;
   if(draft.cat&&!listOf(draft.tipo).some(c=>c.nome===draft.cat))draft.cat=null;
   if(!draft.cat&&draft.tipo!=='spesa'&&listOf(draft.tipo).length===1)draft.cat=listOf(draft.tipo)[0].nome;
+  if(draft.tipo==='trasferimento'&&(!draft.contoA||draft.contoA===draft.conto))draft.contoA=defaultDest(draft.conto);
   fillExpense();
 });
+$('#eTrasf').addEventListener('click',e=>{
+  const b=e.target.closest('[data-da],[data-a]');if(!b)return;
+  if(b.dataset.da!=null){draft.conto=b.dataset.da;if(draft.contoA===draft.conto)draft.contoA=defaultDest(draft.conto)}
+  else{draft.contoA=b.dataset.a;if(draft.contoA===draft.conto)draft.conto=defaultDest(draft.contoA)}
+  renderTrasf();updateExpense();
+});
 $('#keys').addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(b)pressKey(b.dataset.k)});
+$('#eConti').addEventListener('click',e=>{const b=e.target.closest('[data-conto-e]');if(!b)return;draft.conto=b.dataset.contoE;document.querySelectorAll('#eConti [data-conto-e]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
 $('#eCats').addEventListener('click',e=>{
   if(e.target.closest('[data-newcat]')){draft.nota=$('#eNote').value;draft.ric=$('#eRic').checked;closeS($('#sheet'),true);openCat(null,draft.tipo,true);return}
   const b=e.target.closest('[data-c]');if(!b)return;draft.cat=b.dataset.c;
@@ -850,21 +1015,27 @@ $('#form').addEventListener('submit',async e=>{
   e.preventDefault();
   const cent=parseAmount(draft.amt),t=draft.tipo;
   if(!(cent>0)){toast('Scrivi un importo con il tastierino');return}
-  if(!draft.cat){toast(t==='investimento'?'Scegli l’investimento':'Scegli una categoria');return}
+  if(t==='trasferimento'){
+    if(liquidi().length<2){toast('Servono almeno due conti: aggiungine uno nella pagina Patrimonio');return}
+    if(!draft.conto||!draft.contoA||draft.conto===draft.contoA){toast('Scegli due conti diversi');return}
+    draft.cat='Trasferimento';
+  }else if(!draft.cat){toast(t==='investimento'?'Scegli l’investimento':'Scegli una categoria');return}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(draft.data)){toast('Scegli una data');return}
   const ed=draft.editing;
   const item={id:ed?ed.id:newId(),data:draft.data,cent,cat:draft.cat,nota:$('#eNote').value.trim(),ts:ed?ed.ts||Date.now():Date.now()};
   if(t!=='spesa')item.tipo=t;
+  if(draft.conto)item.conto=draft.conto;
+  if(t==='trasferimento')item.contoA=draft.contoA;
   if(ed&&ed.ric)item.ric=ed.ric;
   const makeRic=!ed&&$('#eRic').checked;
-  if(makeRic){const r={id:newId(),tipo:t,cat:item.cat,cent,nota:item.nota,giorno:+item.data.slice(8),dal:ymOf(item.data)};state.ric.push(r);item.ric=r.id}
+  if(makeRic){const r={id:newId(),tipo:t,cat:item.cat,cent,nota:item.nota,giorno:+item.data.slice(8),dal:ymOf(item.data)};if(item.conto)r.conto=item.conto;if(item.contoA)r.contoA=item.contoA;state.ric.push(r);item.ric=r.id}
   closeS($('#sheet'));
   if(!ed&&ymOf(item.data)!==state.mese)state.mese=ymOf(item.data);
   try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}
   try{
     await upsert(item,ed?ymOf(ed.data):null);
     if(makeRic)await saveConfig();
-    toast(ed?'Modifiche salvate':t==='entrata'?`Entrata salvata: +${eur(cent)}`:t==='investimento'?`Investimento salvato: ${eur(cent)} in ${item.cat}`:`Salvata: ${eur(cent)} in ${item.cat}`);
+    toast(ed?'Modifiche salvate':t==='trasferimento'?`Trasferiti ${eur(cent)}: ${item.conto} → ${item.contoA}`:t==='entrata'?`Entrata salvata: +${eur(cent)}`:t==='investimento'?`Investimento salvato: ${eur(cent)} in ${item.cat}`:`Salvata: ${eur(cent)} in ${item.cat}`);
     const h=$('.hero');if(h)h.classList.add('pop');
   }catch(_){}
 });
@@ -877,8 +1048,8 @@ $('#eDelete').onclick=async()=>{
 let cdraft=null;
 function openCat(c,tipo,fromExpense,kindChoice){
   const t=tipo,pal=PAL[t];
-  cdraft=c?{tipo:t,orig:c.nome,nome:c.nome,icona:c.icona,colore:c.colore,budget:c.budget||0,from:false,armed:false}
-    :{tipo:t,orig:null,nome:'',icona:DEF_ICON[t],colore:pal[listOf(t).length%pal.length],budget:0,from:!!fromExpense,armed:false,kind:!!kindChoice};
+  cdraft=c?{tipo:t,orig:c.nome,nome:c.nome,icona:c.icona,colore:c.colore,budget:c.budget||0,vers:c.versatoIniziale||0,from:false,armed:false}
+    :{tipo:t,orig:null,nome:'',icona:DEF_ICON[t],colore:pal[listOf(t).length%pal.length],budget:0,vers:0,from:!!fromExpense,armed:false,kind:!!kindChoice};
   $('#cKind').hidden=!cdraft.kind;
   fillCatSheet();openS($('#catSheet'));
   if(!c)setTimeout(()=>$('#cName').focus(),150);
@@ -890,6 +1061,18 @@ function fillCatSheet(){
   $('#cName').value=cdraft.nome;$('#cName').placeholder={spesa:'Nome, es. Palestra',entrata:'Nome, es. Rimborsi',liquidita:'Nome, es. Conto corrente',investimento:'Nome, es. PAC ETF mondo'}[t];
   $('#cBudgetF').hidden=t!=='spesa';
   $('#cBudget').value=cdraft.budget?centStr(cdraft.budget):'';
+  const isConto=t==='liquidita'||t==='investimento',acc=c&&isConto?state.pat.conti.find(x=>x.nome===cdraft.orig&&x.tipo===t):null;
+  $('#cSaldoF').hidden=!isConto;$('#cVersF').hidden=t!=='investimento';
+  if(isConto){
+    const v=acc?valueAt(acc):null,r=acc?lastRef(acc,todayStr()):null;
+    $('#cSaldoL').textContent=t==='liquidita'?'Saldo di oggi':'Valore di mercato di oggi (facoltativo)';
+    $('#cSaldo').value='';$('#cSaldo').placeholder=v!=null?centStr(v):(t==='liquidita'?'es. 1250,00':'lascia vuoto se non lo sai');
+    $('#cSaldoH').textContent=acc
+      ?(v!=null?`Secondo l’app oggi vale ${eur(v)}. Scrivi un importo solo per correggerlo.`:'Scrivi quanto c’è oggi sul conto: da qui l’app lo aggiorna da sola con i movimenti.')
+      :(t==='liquidita'?'Quanto c’è oggi sul conto: da qui l’app lo aggiorna da sola con entrate, spese e investimenti.':'Se lo lasci vuoto, il valore è uguale a quanto hai versato.');
+    if(t==='investimento'&&r)$('#cSaldoH').textContent+=` Ultimo valore inserito il ${shortDate(r.data)}.`;
+    $('#cVers').value=cdraft.vers?centStr(cdraft.vers):'';
+  }
   $('#cMove').hidden=!c;
   $('#cEmoji').innerHTML=(EMOJI.includes(cdraft.icona)?EMOJI:[cdraft.icona,...EMOJI.slice(0,-1)]).map(e=>`<button type="button" data-e="${e}" aria-pressed="${e===cdraft.icona}">${e}</button>`).join('');
   $('#cCols').innerHTML=SW.map(s=>`<button type="button" data-s="${s}" style="background:${s}" aria-label="Colore" aria-pressed="${s===cdraft.colore}"></button>`).join('');
@@ -899,15 +1082,19 @@ function updateCatPrev(){$('#cPrev').textContent=cdraft.icona;$('#cPrev').style.
 function renderDelZone(){
   const z=$('#cDelZone');
   if(!cdraft.orig){z.innerHTML='';return}
-  const t=cdraft.tipo,n=t==='liquidita'?0:allVoci().filter(v=>v.cat===cdraft.orig&&tipoOf(v)===t).length;
-  const w=t==='entrata'?'entrate':t==='investimento'?'versamenti':'spese';
+  const t=cdraft.tipo,n=t==='liquidita'?allVoci().filter(v=>tipoOf(v)!=='trasferimento'&&contoOf(v)===cdraft.orig).length:allVoci().filter(v=>v.cat===cdraft.orig&&tipoOf(v)===t).length;
+  const w=t==='entrata'?'entrate':t==='investimento'?'versamenti':t==='liquidita'?'movimenti collegati':'spese';
   const label=t==='liquidita'||t==='investimento'?'Elimina':'Elimina categoria';
   if(!cdraft.armed){z.innerHTML=`<button type="button" class="btn danger" id="cDel" style="width:100%">${label}</button>`;return}
   const others=listOf(t).filter(c=>c.nome!==cdraft.orig);
-  const vals=t==='liquidita'||t==='investimento'?' Verranno cancellati anche i saldi inseriti.':'';
+  const nT=t==='liquidita'?allVoci().filter(v=>tipoOf(v)==='trasferimento'&&(v.conto===cdraft.orig||v.contoA===cdraft.orig)).length:0;
+  const vals=(t==='liquidita'||t==='investimento'?' Verranno cancellati anche i saldi inseriti.':'')+(nT?` ${nT===1?'Il trasferimento':`I ${nT} trasferimenti`} da o verso “${esc(cdraft.orig)}” ${nT===1?'verrà eliminato':'verranno eliminati'}.`:'');
+  if(t==='liquidita'&&n&&!others.length){z.innerHTML=`<p class="hint" style="margin-bottom:8px">È il tuo unico conto: i ${n} movimenti restano, ma non saranno più collegati a nessun conto.${vals}</p><button type="button" class="btn danger armed" id="cDelGo" style="width:100%">Conferma: elimina “${esc(cdraft.orig)}”</button>`;return}
   if(!n||!others.length){z.innerHTML=n?`<p class="hint">Contiene ${n} ${w} ed è l’unico elemento di questo tipo: creane un altro prima di eliminarlo.</p>`:`<button type="button" class="btn danger armed" id="cDelGo" style="width:100%">Conferma: elimina “${esc(cdraft.orig)}”</button>${vals?`<p class="hint" style="margin-top:8px">${vals.trim()}</p>`:''}`;return}
   const def=others.find(c=>/^altr/i.test(c.nome))||others[0];
-  z.innerHTML=`<div class="preview stack"><div>Ci sono <b>${n}</b> ${w} in “${esc(cdraft.orig)}”. Dove li sposto?${vals}</div>
+  const one={spese:'spesa',entrate:'entrata',versamenti:'versamento','movimenti collegati':'movimento collegato'}[w],fem=t==='spesa'||t==='entrata';
+  const frase=n===1?`C’è <b>1</b> ${one} in “${esc(cdraft.orig)}”. Dove ${fem?'la':'lo'} sposto?`:`Ci sono <b>${n}</b> ${w} in “${esc(cdraft.orig)}”. Dove ${fem?'le':'li'} sposto?`;
+  z.innerHTML=`<div class="preview stack"><div>${frase}${vals}</div>
     <select class="inp" id="cMoveTo">${others.map(c=>`<option value="${esc(c.nome)}"${c===def?' selected':''}>${c.icona} ${esc(c.nome)}</option>`).join('')}</select>
     <button type="button" class="btn danger armed" id="cDelGo">Sposta ed elimina</button></div>`;
 }
@@ -923,7 +1110,7 @@ $('#cUp').onclick=()=>moveCat(-1);$('#cDown').onclick=()=>moveCat(1);
 async function moveCat(d){
   const t=cdraft.tipo;
   if(t==='spesa'||t==='entrata'){const L=listOf(t),i=L.findIndex(c=>c.nome===cdraft.orig),j=i+d;if(i<0||j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];render();await saveConfig()}
-  else{const A=state.pat.conti,idx=A.map((c,k)=>c.tipo===t?k:-1).filter(k=>k>=0),p=idx.findIndex(k=>A[k].nome===cdraft.orig),q=p+d;if(p<0||q<0||q>=idx.length)return;[A[idx[p]],A[idx[q]]]=[A[idx[q]],A[idx[p]]];await savePat()}
+  else{if(t==='liquidita')await materializeConti();const A=state.pat.conti,idx=A.map((c,k)=>c.tipo===t?k:-1).filter(k=>k>=0),p=idx.findIndex(k=>A[k].nome===cdraft.orig),q=p+d;if(p<0||q<0||q>=idx.length)return;[A[idx[p]],A[idx[q]]]=[A[idx[q]],A[idx[p]]];await savePat()}
   toast(d<0?'Spostato su':'Spostato giù');
 }
 $('#cDelZone').addEventListener('click',async e=>{
@@ -932,14 +1119,21 @@ $('#cDelZone').addEventListener('click',async e=>{
   const name=cdraft.orig,t=cdraft.tipo,to=$('#cMoveTo')?$('#cMoveTo').value:null;
   closeS($('#catSheet'));
   try{
-    if(to)await remapCategory(name,to,t);
+    if(t==='liquidita'){
+      await materializeConti();
+      /* i trasferimenti che coinvolgono il conto eliminato non hanno più senso: si tolgono */
+      for(const ym of Object.keys(state.mesi).sort()){const tr=v=>tipoOf(v)==='trasferimento'&&(v.conto===name||v.contoA===name);if(voci(ym).some(tr))await saveMonth(ym,voci(ym).filter(v=>!tr(v)).map(v=>({...v})))}
+      state.ric=state.ric.filter(r=>!(r.tipo==='trasferimento'&&(r.conto===name||r.contoA===name)));
+      if(to)await remapConto(name,to);
+    }
+    else if(to)await remapCategory(name,to,t);
     if(t==='spesa'||t==='entrata'){
       const L=listOf(t).filter(c=>c.nome!==name);
       if(t==='entrata')state.catsIn=L.length?L:[mkCat('Altre entrate',0,'entrata')];else state.cats=L.length?L:[mkCat('Altro',0)];
       if(state.filtro===name&&t==='spesa')state.filtro=null;
       await saveConfig();
     }else{
-      state.pat.conti=state.pat.conti.filter(c=>!(c.nome===name&&c.tipo===t));delete state.pat.valori[name];
+      state.pat.conti=state.pat.conti.filter(c=>!(c.nome===name&&c.tipo===t));
       await savePat();if(to)await saveConfig();
     }
     render();toast(to?`Eliminato. Movimenti spostati in ${to}`:'Eliminato');
@@ -956,9 +1150,16 @@ $('#catForm').addEventListener('submit',async e=>{
   if(isNaN(budget)){toast('Budget non valido');return}
   const from=cdraft.from,orig=cdraft.orig;
   if(isConto){
-    const obj={nome,tipo:t,icona:cdraft.icona,colore:cdraft.colore};
-    if(orig){const i=state.pat.conti.findIndex(c=>c.nome===orig&&c.tipo===t);state.pat.conti[i]=obj;if(orig!==nome&&state.pat.valori[orig]){state.pat.valori[nome]=state.pat.valori[orig];delete state.pat.valori[orig]}}
-    else state.pat.conti.push(obj);
+    const sRaw=$('#cSaldo').value.trim(),saldo=sRaw?parseSigned(sRaw):null;
+    if(sRaw&&isNaN(saldo)){toast(t==='liquidita'?'Saldo non valido: usa solo numeri, es. 1250,50':'Valore non valido: usa solo numeri, es. 1250,50');return}
+    const vRaw=t==='investimento'?$('#cVers').value.trim():'',vi=vRaw?parseAmount(vRaw):0;
+    if(isNaN(vi)){toast('Importo già versato non valido');return}
+    const old=orig?state.pat.conti.find(c=>c.nome===orig&&c.tipo===t):null;
+    const before=old?valueAt(old):null;
+    const obj={nome,tipo:t,icona:cdraft.icona,colore:cdraft.colore,storico:old?old.storico.slice():[]};
+    if(t==='investimento')obj.versatoIniziale=vi;
+    if(saldo!=null&&(saldo!==before||!lastRef(obj,todayStr())))addRef(obj,saldo);
+    if(old)state.pat.conti[state.pat.conti.indexOf(old)]=obj;else state.pat.conti.push(obj);
   }else{
     const L=listOf(t),obj={nome,icona:cdraft.icona,colore:cdraft.colore,budget};
     if(orig)L[L.findIndex(c=>c.nome===orig)]=obj;else L.push(obj);
@@ -966,35 +1167,44 @@ $('#catForm').addEventListener('submit',async e=>{
   if(from){draft.cat=nome;closeS($('#catSheet'),true);fillExpense();openS($('#sheet'))}else closeS($('#catSheet'));
   render();
   try{
-    if(orig&&orig!==nome){await remapCategory(orig,nome,t);if(t==='spesa'){if(state.filtro===orig)state.filtro=nome;if(state.catTrend===orig)state.catTrend=nome}await saveConfig()}
+    if(orig&&orig!==nome){
+      if(t==='liquidita')await remapConto(orig,nome);else await remapCategory(orig,nome,t);
+      if(t==='spesa'){if(state.filtro===orig)state.filtro=nome;if(state.catTrend===orig)state.catTrend=nome}
+      await saveConfig();
+    }
     await saveFor(t);toast(orig?'Modifiche salvate':`“${nome}” aggiunto`);
   }catch(_){}
 });
 
-/* balances sheet */
+/* allinea saldi e valori a oggi */
 function openVal(){
-  const ym=state.mese;
-  $('#vTitle').textContent=`Saldi a ${ym===ymOf(todayStr())?'oggi':'fine '+mName(ym)} (${mName(ym)} ${ym.slice(0,4)})`;
+  const today=todayStr(),all=allVoci();
   const grp=(t,title)=>{const L=state.pat.conti.filter(c=>c.tipo===t);if(!L.length)return '';
-    return `<div class="label">${title}</div>`+L.map(c=>{const v=valAt(c.nome,ym),same=v&&v.ym===ym;
-      return `<label class="vrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(c.nome)}</b><span class="small">${v?(same?'Già inserito per questo mese':`Ultimo: ${eur(v.cent)} (${mName(v.ym)})`):'Nessun valore inserito'}${t==='investimento'?` · versati ${eur0(versatoAt(c.nome,ym))}`:''}</span></span><input class="inp num" inputmode="decimal" data-acc="${esc(c.nome)}" placeholder="${v&&!same?centStr(v.cent):'0'}" value="${same?centStr(v.cent):''}"></label>`}).join('')};
-  $('#vList').innerHTML=grp('liquidita','Liquidità')+grp('investimento','Investimenti — valore attuale');
+    return `<div class="label">${title}</div>`+L.map(c=>{const v=valueAt(c,today,all),r=lastRef(c,today);
+      const info=t==='liquidita'?(v==null?'Saldo mai inserito':`Secondo l’app: ${eur(v)}`)
+        :`${r?`Valore stimato: ${eur(v)}`:'Valore di mercato mai inserito'} · versati ${eur0(versato(c,today,all))}`;
+      return `<label class="vrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(c.nome)}</b><span class="small num">${info}</span></span><input class="inp num" inputmode="decimal" data-acc="${esc(c.nome)}" data-tipo="${t}" placeholder="${v!=null?centStr(v):'0'}"></label>`}).join('')};
+  $('#vList').innerHTML=grp('liquidita','Liquidità: saldo di oggi')+grp('investimento','Investimenti: valore di mercato di oggi');
   openS($('#valSheet'));
 }
 $('#vCancel').onclick=()=>closeS($('#valSheet'));
 $('#valForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const ym=state.mese;let n=0,bad=false;
+  const today=todayStr(),all=allVoci(),changes=[];let bad=false;
   document.querySelectorAll('#vList input[data-acc]').forEach(i=>{
-    const raw=i.value.trim(),name=i.dataset.acc,h=state.pat.valori[name]=state.pat.valori[name]||{};
-    if(!raw){if(h[ym]!=null){delete h[ym];n++}return}
-    const c=parseAmount(raw);if(isNaN(c)){bad=true;return}
-    if(h[ym]!==c){h[ym]=c;n++}
+    const raw=i.value.trim();if(!raw)return;
+    const c=parseSigned(raw);if(isNaN(c)){bad=true;return}
+    const acc=state.pat.conti.find(x=>x.nome===i.dataset.acc&&x.tipo===i.dataset.tipo);if(!acc)return;
+    const before=valueAt(acc,today,all);
+    if(before!==c||!lastRef(acc,today))changes.push({acc,c,before});
   });
   if(bad){toast('Controlla gli importi: usa solo numeri, es. 1250,50');return}
   closeS($('#valSheet'));
-  if(!n){toast('Nessun saldo cambiato');return}
-  await savePat();toast('Saldi salvati');
+  if(!changes.length){toast('Nessun valore cambiato');return}
+  changes.forEach(x=>addRef(x.acc,x.c));
+  await savePat();
+  const one=changes.length===1&&changes[0].before!=null&&changes[0].acc.tipo==='liquidita'?changes[0]:null;
+  toast(one?`${one.acc.nome}: ${one.c-one.before>0?'+':'−'}${eur(Math.abs(one.c-one.before))} rispetto al calcolo dell’app`:'Saldi e valori aggiornati');
 });
 
 /* ---------- main interactions ---------- */
@@ -1005,7 +1215,7 @@ scrim.onclick=()=>{if(isOpen('#catSheet'))closeCat();else if(isOpen('#valSheet')
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{state.view=t.dataset.view;render();window.scrollTo(0,0)});
 
 async function registerRic(rs){
-  const ym=state.mese,add=rs.map(r=>{const it={id:newId(),data:ricDate(r,ym),cent:r.cent,cat:r.cat,nota:r.nota||'',ts:Date.now(),ric:r.id};if(r.tipo!=='spesa')it.tipo=r.tipo;return it});
+  const ym=state.mese,add=rs.map(r=>{const it={id:newId(),data:ricDate(r,ym),cent:r.cent,cat:r.cat,nota:r.nota||'',ts:Date.now(),ric:r.id};if(r.tipo!=='spesa')it.tipo=r.tipo;const c=contoOf(r);if(c)it.conto=c;if(r.tipo==='trasferimento')it.contoA=r.contoA;return it});
   try{await saveMonth(ym,voci(ym).map(v=>({...v})).concat(add));toast(add.length>1?`${add.length} movimenti registrati`:'Registrato')}catch(_){}
 }
 $('#main').addEventListener('click',async e=>{
@@ -1019,9 +1229,11 @@ $('#main').addEventListener('click',async e=>{
   if(t.closest('[data-ricall]')){registerRic(pendingRic(state.mese));return}
   if(b=t.closest('[data-ricdel]')){const i=state.ric.findIndex(x=>x.id===b.dataset.ricdel);if(i<0)return;const [r]=state.ric.splice(i,1);await saveConfig();render();toast('Ricorrente eliminato',{label:'Annulla',fn:async()=>{state.ric.splice(i,0,r);await saveConfig();render()}});return}
   if(b=t.closest('.crow[data-edit]')){openCat(listOf(state.catTab).find(c=>c.nome===b.dataset.edit),state.catTab);return}
-  if(b=t.closest('.crow[data-conto]')){const c=state.pat.conti.find(x=>x.nome===b.dataset.conto);if(c)openCat(c,c.tipo);return}
+  if(t.closest('[data-eye]')){state.hide=!state.hide;render();IDB.set('prefs',{nascondi:state.hide}).catch(()=>{});return}
+  if(b=t.closest('[data-conto]')){const c=state.pat.conti.find(x=>x.nome===b.dataset.conto);if(c)openCat(c,c.tipo);return}
   if(t.closest('[data-newconto]')){openCat(null,'liquidita',false,true);return}
   if(t.closest('[data-aggiorna]')){openVal();return}
+  if(t.closest('[data-trasf]')){openExpense(null,'trasferimento');return}
   if(b=t.closest('[data-cattab]')){state.catTab=b.dataset.cattab;render();return}
   if(t.closest('#newCat')){openCat(null,state.catTab);return}
   if(b=t.closest('[data-period]')){state.period=b.dataset.period;lastView=null;render();return}
@@ -1031,6 +1243,8 @@ $('#main').addEventListener('click',async e=>{
   if(t.id==='expXlsx')return exportXlsx(t);
   if(t.id==='expJson'||t.closest('[data-backup]'))return exportJson();
   if(t.id==='doRestore')return doRestore();
+  if(t.id==='lockOn')return enableLock();
+  if(t.id==='lockOff')return disableLock();
   if(t.id==='cancelRestore'){state.restore=null;render();return}
   if(t.id==='doImport')return doImport();
   if(t.id==='cancelImport'){state.importPreview=null;render();return}
@@ -1039,6 +1253,7 @@ $('#main').addEventListener('input',e=>{if(e.target.id==='q'){state.q=e.target.v
 $('#main').addEventListener('change',e=>{
   if(e.target.id==='file'&&e.target.files[0])readImport(e.target.files[0]);
   if(e.target.id==='restoreFile'&&e.target.files[0])readBackup(e.target.files[0]);
+  if(e.target.id==='lockAfter'&&state.lock){state.lock.dopo=+e.target.value;IDB.set('lock',state.lock).then(()=>toast('Salvato'))}
 });
 $('#main').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='budget')$('#saveBudget').click()});
 
@@ -1056,10 +1271,10 @@ async function exportXlsx(btn){
     await loadXlsxLib();
     const U=XLSX.utils,wb=U.book_new(),money='#,##0.00 "€";[Red]-#,##0.00 "€"';
     const fmt=(ws,cols,from,z)=>{if(!ws['!ref'])return;const r=U.decode_range(ws['!ref']);for(let R=from;R<=r.e.r;R++)for(const C of cols){const a=U.encode_cell({r:R,c:C});if(ws[a]&&ws[a].t==='n')ws[a].z=z}};
-    const TL={spesa:'Spesa',entrata:'Entrata',investimento:'Investimento'};
-    const mov=U.aoa_to_sheet([['Data','Tipo','Categoria','Importo (€)','Nota'],...all.map(v=>{const t=tipoOf(v);return[serial(v.data),TL[t],v.cat,(t==='entrata'?1:-1)*v.cent/100,v.nota||'']})]);
-    fmt(mov,[0],1,'dd/mm/yyyy');fmt(mov,[3],1,money);
-    mov['!cols']=[{wch:12},{wch:13},{wch:24},{wch:13},{wch:44}];mov['!autofilter']={ref:mov['!ref']};
+    const TL={spesa:'Spesa',entrata:'Entrata',investimento:'Investimento',trasferimento:'Trasferimento'};
+    const mov=U.aoa_to_sheet([['Data','Tipo','Categoria','Conto','Importo (€)','Nota','Verso il conto'],...all.map(v=>{const t=tipoOf(v);return[serial(v.data),TL[t],v.cat,contoOf(v)||'',(t==='entrata'?1:-1)*v.cent/100,v.nota||'',t==='trasferimento'?contoAOf(v)||'':'']})]);
+    fmt(mov,[0],1,'dd/mm/yyyy');fmt(mov,[4],1,money);
+    mov['!cols']=[{wch:12},{wch:13},{wch:24},{wch:18},{wch:13},{wch:44},{wch:18}];mov['!autofilter']={ref:mov['!ref']};
     U.book_append_sheet(wb,mov,'Movimenti');
     const months=Object.keys(state.mesi).filter(k=>voci(k).length).sort();
     const names=state.cats.map(c=>c.nome);all.forEach(v=>{if(tipoOf(v)==='spesa'&&!names.includes(v.cat))names.push(v.cat)});
@@ -1072,18 +1287,23 @@ async function exportXlsx(btn){
     U.book_append_sheet(wb,rie,'Riepilogo mensile');
     const C=state.pat.conti;
     if(C.length){
-      const ks=Object.values(state.pat.valori).flatMap(h=>Object.keys(h)).sort();
-      if(ks.length){
-        const pm=[];let m=ks[0];const end=ymOf(todayStr())>ks[ks.length-1]?ymOf(todayStr()):ks[ks.length-1];while(m<=end&&pm.length<240){pm.push(m);m=shiftYm(m,1)}
-        const pr=pm.map(m=>{const vals=C.map(c=>{const v=valAt(c.nome,m);return v?v.cent/100:''});const l=totAt(m,'liquidita'),i=totAt(m,'investimento');return[ymLabel(m),...vals,(l||0)/100,(i||0)/100,((l||0)+(i||0))/100,versatoAt(null,m)/100]});
-        const ps=U.aoa_to_sheet([['Mese (saldo a fine mese)',...C.map(c=>c.nome),'Liquidità','Investimenti','Patrimonio totale','Versato negli investimenti'],...pr]);
-        fmt(ps,C.map((_,i)=>i+1).concat([C.length+1,C.length+2,C.length+3,C.length+4]),1,money);
-        ps['!cols']=[{wch:22},...C.map(c=>({wch:Math.max(12,c.nome.length+2)})),{wch:13},{wch:13},{wch:17},{wch:22}];
-        U.book_append_sheet(wb,ps,'Patrimonio');
-      }
+      /* patrimonio a fine di ogni mese, dal primo dato a oggi, ricostruito dai saldi inseriti e dai movimenti */
+      const cur=ymOf(todayStr());let first=cur;
+      Object.keys(state.mesi).forEach(k=>{if(voci(k).length&&k<first)first=k});
+      C.forEach(c=>c.storico.forEach(r=>{if(ymOf(r.data)<first)first=ymOf(r.data)}));
+      const pmo=[];let m=first;while(m<=cur&&pmo.length<240){pmo.push(m);m=shiftYm(m,1)}
+      const cell=v=>v==null?'':v/100;
+      const pr=pmo.map(m=>{const d=monthEnd(m),l=totale('liquidita',d,all),i=totale('investimento',d,all);
+        return[m===cur?`Oggi (${dayLabel(d).toLowerCase()})`:ymLabel(m),...C.map(c=>cell(valueAt(c,d,all))),cell(l),cell(i),((l||0)+(i||0))/100,versatoTot(d,all)/100]});
+      const ps=U.aoa_to_sheet([['Mese (valore a fine mese)',...C.map(c=>c.nome),'Liquidità','Investimenti','Patrimonio totale','Versato negli investimenti'],...pr]);
+      fmt(ps,C.map((_,i)=>i+1).concat([C.length+1,C.length+2,C.length+3,C.length+4]),1,money);
+      ps['!cols']=[{wch:26},...C.map(c=>({wch:Math.max(12,c.nome.length+2)})),{wch:13},{wch:13},{wch:17},{wch:22}];
+      U.book_append_sheet(wb,ps,'Patrimonio');
     }
-    const cs=U.aoa_to_sheet([['Tipo','Nome','Icona','Budget mensile (€)'],...state.cats.map(c=>['Spesa',c.nome,c.icona,c.budget?c.budget/100:'']),...state.catsIn.map(c=>['Entrata',c.nome,c.icona,'']),...C.map(c=>[c.tipo==='investimento'?'Investimento':'Liquidità',c.nome,c.icona,''])]);
-    fmt(cs,[3],1,money);cs['!cols']=[{wch:13},{wch:24},{wch:7},{wch:18}];
+    const cs=U.aoa_to_sheet([['Tipo','Nome','Icona','Budget mensile (€)','Valore oggi (€)','Versato (€)'],
+      ...state.cats.map(c=>['Spesa',c.nome,c.icona,c.budget?c.budget/100:'','','']),...state.catsIn.map(c=>['Entrata',c.nome,c.icona,'','','']),
+      ...C.map(c=>{const v=valueAt(c,todayStr(),all);return[c.tipo==='investimento'?'Investimento':'Liquidità',c.nome,c.icona,'',v==null?'':v/100,c.tipo==='investimento'?versato(c,todayStr(),all)/100:'']})]);
+    fmt(cs,[3,4,5],1,money);cs['!cols']=[{wch:13},{wch:24},{wch:7},{wch:18},{wch:15},{wch:13}];
     U.book_append_sheet(wb,cs,'Categorie e conti');
     const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
     saveFile(`spese-${todayStr()}.xlsx`,new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
@@ -1099,7 +1319,7 @@ function saveFile(name,blob){
 }
 async function exportJson(){
   const {ultimoBackup,...config}=configData();
-  const data={app:'le-mie-spese',versione:1,creato:new Date().toISOString(),mesi:state.mesi,config,patrimonio:{conti:state.pat.conti,valori:state.pat.valori}};
+  const data={app:'le-mie-spese',versione:2,creato:new Date().toISOString(),mesi:state.mesi,config,patrimonio:{conti:state.pat.conti}};
   try{
     saveFile(`backup-spese-${todayStr()}.json`,new Blob([JSON.stringify(data)],{type:'application/json'}));
     state.lastBackup=todayStr();await saveConfig();render();
@@ -1119,7 +1339,7 @@ async function doRestore(){
   const d=state.restore&&state.restore.d;if(!d)return;
   state.mesi=d.mesi||{};applyConfig(d.config||{});applyPat(d.patrimonio);state.restore=null;state.filtro=null;
   try{
-    await chain(()=>IDB.set('mesi',state.mesi));await saveConfig();await savePat();
+    await chain(()=>IDB.set('mesi',state.mesi));await saveConfig();await savePat();await materializeConti();
     state.view='mese';render();window.scrollTo(0,0);toast('Backup ripristinato');
   }catch(_){toast('Ripristino non riuscito. Riprova.')}
 }
@@ -1161,7 +1381,7 @@ async function readImport(file){
   render();
 }
 function buildPreview(sheets){
-  const RX={data:/^(data|giorno|date)\b/i,imp:/(importo|spesa|euro|€|costo|ammontare|prezzo|uscita|amount|totale)/i,cat:/(categoria|category)/i,tipo:/^tipo$/i,nota:/(nota|note|descrizione|dettaglio|causale|voce|cosa)/i};
+  const RX={data:/^(data|giorno|date)\b/i,imp:/(importo|spesa|euro|€|costo|ammontare|prezzo|uscita|amount|totale)/i,cat:/(categoria|category)/i,tipo:/^tipo$/i,conto:/^conto$/i,contoA:/(verso|destinazione)/i,nota:/(nota|note|descrizione|dettaglio|causale|voce|cosa)/i};
   const key=v=>v.data+'|'+v.cent+'|'+v.cat.toLowerCase()+'|'+tipoOf(v);
   const existing=new Set(allVoci().map(key));
   const items=[],newCats=[];let skipped=0,dup=0,found=false;
@@ -1185,7 +1405,7 @@ function buildPreview(sheets){
         // più colonne categoria: prima quella "finale"/"assegnata", poi le altre come riserva
         const fin=c=>/finale|assegnat/i.test(c)?1:0;
         const cats=cells.map((c,i)=>i!==ii&&RX.cat.test(c)?i:-1).filter(i=>i>=0).sort((a,b)=>fin(cells[b])-fin(cells[a]));
-        h=r;col={data:di,imp:ii,cats,tipo:cells.findIndex(c=>RX.tipo.test(c)),nota:cells.findIndex((c,i)=>i!==ii&&i!==di&&RX.nota.test(c))};
+        h=r;col={data:di,imp:ii,cats,tipo:cells.findIndex(c=>RX.tipo.test(c)),conto:cells.findIndex(c=>RX.conto.test(c)),contoA:cells.findIndex(c=>RX.contoA.test(c)),nota:cells.findIndex((c,i)=>i!==ii&&i!==di&&RX.nota.test(c))};
       }
     }
     if(h<0)continue;found=true;
@@ -1198,6 +1418,14 @@ function buildPreview(sheets){
       if(!data||!(cent>0)){skipped++;continue}
       let c='';for(const i of col.cats){c=String(row[i]||'').trim();if(c)break}
       const s=sec[c.toLowerCase()],tc=col.tipo>=0?String(row[col.tipo]):'';
+      if(/trasfer|giroconto|prelievo/i.test(tc)){
+        const f=n=>{n=String(n||'').trim().toLowerCase();const x=liquidi().find(y=>y.nome.toLowerCase()===n);return x?x.nome:null};
+        const da=col.conto>=0?f(row[col.conto]):null,a=col.contoA>=0?f(row[col.contoA]):null;
+        if(!da||!a||da===a){skipped++;continue}
+        const it={id:newId(),data,cent,cat:'Trasferimento',nota:col.nota>=0?String(row[col.nota]).trim():'',ts:Date.now(),tipo:'trasferimento',conto:da,contoA:a};
+        if(existing.has(key(it))){dup++;continue}
+        existing.add(key(it));items.push(it);continue;
+      }
       let t=sg?(isNeg(row[col.imp])?'spesa':'entrata'):'spesa';
       if(/investiment/i.test(tc)||s==='investimento')t='investimento';
       else if(/entrat/i.test(tc)||(!sg&&s==='entrata'))t='entrata';
@@ -1207,6 +1435,8 @@ function buildPreview(sheets){
       if(known)c=known.nome;else if(!newCats.some(n=>n.nome===c&&n.tipo===t))newCats.push({nome:c,tipo:t});
       const nota=col.nota>=0?String(row[col.nota]).trim():'';
       const it={id:newId(),data,cent,cat:c,nota,ts:Date.now()};if(t!=='spesa')it.tipo=t;
+      const cn=col.conto>=0?String(row[col.conto]).trim().toLowerCase():'',lc=liquidi().find(x=>x.nome.toLowerCase()===cn);
+      const conto=lc?lc.nome:contoOf({});if(conto)it.conto=conto;
       if(existing.has(key(it))){dup++;continue}
       existing.add(key(it));items.push(it);
     }
@@ -1227,6 +1457,58 @@ async function doImport(){
     if(cfg)await saveConfig();if(pat)await savePat();
     toast(`Importati ${p.items.length} movimenti`);state.importPreview=null;state.mese=ymOf(p.items[p.items.length-1].data);state.view='mese';render();
   }catch(_){render()}
+}
+
+/* ---------- blocco con impronta: passkey del telefono (WebAuthn), la verifica la fa Android. Nessun server. ---------- */
+state.lock=null;state.locked=false;
+let hiddenAt=0,unlocking=false;
+const b64u={
+  enc:b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+  dec:s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((s.length+3)%4)),c=>c.charCodeAt(0))
+};
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+async function lockAvailable(){try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(_){return false}}
+async function verifyUser(){
+  const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:b64u.dec(state.lock.credId)}],userVerification:'required',timeout:60000}});
+  if(!(new Uint8Array(a.response.authenticatorData)[32]&4))throw new Error('verifica non eseguita');
+}
+function showLock(on){$('#lock').hidden=!on;if(on)$('#fab').hidden=true}
+async function unlock(){
+  if(unlocking||!state.lock)return;unlocking=true;$('#lockMsg').textContent='';
+  try{await verifyUser();state.locked=false;showLock(false);render()}
+  catch(e){$('#lockMsg').textContent=e&&e.name==='NotAllowedError'?'Sblocco annullato. Tocca “Sblocca” per riprovare.':'Non riesco a verificarti. Se hai cancellato la passkey dal Gestore password, reinstalla l’app e ripristina un backup.'}
+  finally{unlocking=false}
+}
+function lockNow(){state.locked=true;document.querySelectorAll('.sheet.on').forEach(s=>closeS(s));render()}
+async function enableLock(){
+  if(!await lockAvailable()){toast('Su questo telefono lo sblocco biometrico per le app web non è disponibile');return}
+  try{
+    const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Le mie spese',id:location.hostname},user:{id:rnd(16),name:'Le mie spese',displayName:'Le mie spese'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
+    state.lock={credId:b64u.enc(c.rawId),dopo:1};
+    await IDB.set('lock',state.lock);render();toast('Blocco attivato');
+  }catch(e){toast(e&&e.name==='NotAllowedError'?'Attivazione annullata':'Non sono riuscito ad attivare il blocco. Riprova.')}
+}
+async function disableLock(){
+  try{await verifyUser();state.lock=null;await IDB.set('lock',null);render();toast('Blocco disattivato')}
+  catch(_){toast('Verifica non riuscita: il blocco resta attivo')}
+}
+$('#unlockBtn').onclick=unlock;
+document.addEventListener('visibilitychange',()=>{
+  if(!state.lock)return;
+  if(document.hidden){hiddenAt=Date.now();if(!state.locked)showLock(true)} // copre i dati anche nell'anteprima delle app recenti
+  else if(state.locked)unlock();
+  else if(Date.now()-hiddenAt>=state.lock.dopo*60000){lockNow();unlock()}
+  else{showLock(false);render()}
+});
+function lockCard(){
+  if(!state.lock)return `<section class="card stack"><div><h3>Blocco con impronta</h3><p class="sub" style="margin:0">Quando apri l’app, il telefono ti chiede l’impronta (o il PIN) prima di mostrare i dati. Android ti proporrà di salvare una “passkey”: contiene solo la chiave di sblocco, nessun dato.</p></div>
+    <button class="btn" id="lockOn">Attiva il blocco</button>
+    <p class="hint">È un lucchetto sull’app, non una cifratura: protegge da chi prende in mano il telefono sbloccato.</p></section>`;
+  const opt=[[0,'subito'],[1,'dopo 1 minuto'],[5,'dopo 5 minuti'],[15,'dopo 15 minuti']].map(([v,l])=>`<option value="${v}"${state.lock.dopo===v?' selected':''}>${l}</option>`).join('');
+  return `<section class="card stack"><div><h3>Blocco con impronta</h3><p class="sub" style="margin:0">Attivo. Quando torni nell’app, la richiesta dell’impronta riparte:</p></div>
+    <select class="inp" id="lockAfter" aria-label="Quando bloccare di nuovo">${opt}</select>
+    <button class="btn ghost" id="lockOff">Disattiva il blocco</button></section>`;
 }
 
 /* ---------- toast ---------- */
