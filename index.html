@@ -346,7 +346,7 @@ button{cursor:pointer}
 <script src="lib/chart.umd.js"></script>
 <script>
 /* ---------- constants ---------- */
-const APP_VERSION='3 (patrimonio unico, trasferimenti, impronta)';
+const APP_VERSION='3.1 (patrimonio unico, trasferimenti, impronta)';
 const SW=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#0f8b8d','#9a6b3f','#64748b','#c2410c'];
 const PAL={spesa:SW,entrata:['#1baf7a','#0f8b8d','#008300','#2a78d6','#eda100','#4a3aa7'],liquidita:['#2a78d6','#0f8b8d','#64748b','#1baf7a'],investimento:['#4a3aa7','#e87ba4','#eda100','#0f8b8d','#c2410c']};
 const DEF_NAMES=['Casa (affitto/mutuo)','Bollette','Spesa alimentare','Trasporti','Ristoranti e bar','Svago e hobby','Abbonamenti','Salute','Abbigliamento','Casa e arredo','Viaggi','Regali','Gatti','Commissioni e tasse','Altro'];
@@ -913,7 +913,8 @@ function viewAltro(){
     <section class="card stack"><div><h3>Backup e ripristino</h3><p class="sub" style="margin:0">I tuoi dati sono salvati solo in questo telefono. Fai un backup ogni tanto e copialo sul PC o su un cloud di tua scelta: se cambi o resetti il telefono, lo ripristini da qui.</p></div>
       <p class="hint">${(()=>{const a=backupAge();return a===null?'Non hai ancora fatto nessun backup.':a===0?'Ultimo backup: oggi.':`Ultimo backup: ${a} ${a===1?'giorno':'giorni'} fa.`})()} ${state.persist===true?'Chrome non cancellerà i dati dell’app.':state.persist===false?'Installa l’app sulla schermata Home per proteggere i dati dalla pulizia automatica di Chrome.':''}</p>
       <button class="btn" id="expJson">Fai il backup completo</button>
-      <label class="field"><span class="label">Ripristina da un backup</span><input type="file" id="restoreFile" accept=".json,application/json"></label>
+      <label class="field"><span class="label">Ripristina da un backup</span><input type="file" id="restoreFile"></label>
+      <p class="hint">Scegli il file <b>backup-spese-….json</b> (di solito è nella cartella Download). Poi tocca “Sostituisci con il backup”.</p>
       ${state.restore?`<div class="preview stack">${state.restore.error?esc(state.restore.error):`<div>Backup del ${new Date(state.restore.creato).toLocaleDateString('it-IT')}: <b>${state.restore.n}</b> ${state.restore.n===1?'movimento':'movimenti'} e <b>${state.restore.conti}</b> ${state.restore.conti===1?'conto':'conti'}. Ripristinandolo, i dati attuali di questa app vengono <b>sostituiti</b>.</div>
         <div class="inline"><button class="btn danger armed" id="doRestore">Sostituisci con il backup</button><button class="btn ghost" id="cancelRestore">Annulla</button></div>`}</div>`:''}</section>
     <section class="card stack"><div><h3>Esporta in Excel</h3><p class="sub" style="margin:0">Un file .xlsx con tutti i tuoi dati: Movimenti (spese e investimenti in negativo, entrate in positivo), Riepilogo mensile, Patrimonio e Categorie.</p></div>
@@ -1254,7 +1255,7 @@ $('#main').addEventListener('click',async e=>{
 $('#main').addEventListener('input',e=>{if(e.target.id==='q'){state.q=e.target.value;$('#list').innerHTML=listHtml()}});
 $('#main').addEventListener('change',e=>{
   if(e.target.id==='file'&&e.target.files[0])readImport(e.target.files[0]);
-  if(e.target.id==='restoreFile'&&e.target.files[0])readBackup(e.target.files[0]);
+  if(e.target.id==='restoreFile'&&e.target.files[0])readBackup(e.target.files[0]).then(()=>{const p=$('#main .preview');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})});
   if(e.target.id==='lockAfter'&&state.lock){state.lock.dopo=+e.target.value;IDB.set('lock',state.lock).then(()=>toast('Salvato'))}
 });
 $('#main').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='budget')$('#saveBudget').click()});
@@ -1496,12 +1497,18 @@ async function disableLock(){
   catch(_){toast('Verifica non riuscita: il blocco resta attivo')}
 }
 $('#unlockBtn').onclick=unlock;
+/* mentre è aperta la scelta di un file (backup, Excel) l'app va in secondo piano: al ritorno non va
+   ricostruita la pagina, altrimenti il campo che sta per ricevere il file sparisce e il file si perde */
+let picking=0;
+document.addEventListener('click',e=>{if(e.target.matches&&e.target.matches('input[type=file]'))picking=Date.now()},true);
 document.addEventListener('visibilitychange',()=>{
   if(!state.lock)return;
-  if(document.hidden){hiddenAt=Date.now();if(!state.locked)showLock(true)} // copre i dati anche nell'anteprima delle app recenti
-  else if(state.locked)unlock();
-  else if(Date.now()-hiddenAt>=state.lock.dopo*60000){lockNow();unlock()}
-  else{showLock(false);render()}
+  if(document.hidden){hiddenAt=Date.now();if(!state.locked)showLock(true);return} // copre i dati anche nell'anteprima delle app recenti
+  const away=Date.now()-hiddenAt,choosing=picking&&Date.now()-picking<5*60000;
+  picking=0;
+  if(state.locked)unlock();
+  else if(!choosing&&away>=state.lock.dopo*60000){lockNow();unlock()}
+  else showLock(false);
 });
 function lockCard(){
   if(!state.lock)return `<section class="card stack"><div><h3>Blocco con impronta</h3><p class="sub" style="margin:0">Quando apri l’app, il telefono ti chiede l’impronta (o il PIN) prima di mostrare i dati. Android ti proporrà di salvare una “passkey”: contiene solo la chiave di sblocco, nessun dato.</p></div>
