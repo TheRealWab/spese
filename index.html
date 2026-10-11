@@ -346,6 +346,7 @@ button{cursor:pointer}
 <script src="lib/chart.umd.js"></script>
 <script>
 /* ---------- constants ---------- */
+const APP_VERSION='3 (patrimonio unico, trasferimenti, impronta)';
 const SW=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#0f8b8d','#9a6b3f','#64748b','#c2410c'];
 const PAL={spesa:SW,entrata:['#1baf7a','#0f8b8d','#008300','#2a78d6','#eda100','#4a3aa7'],liquidita:['#2a78d6','#0f8b8d','#64748b','#1baf7a'],investimento:['#4a3aa7','#e87ba4','#eda100','#0f8b8d','#c2410c']};
 const DEF_NAMES=['Casa (affitto/mutuo)','Bollette','Spesa alimentare','Trasporti','Ristoranti e bar','Svago e hobby','Abbonamenti','Salute','Abbigliamento','Casa e arredo','Viaggi','Regali','Gatti','Commissioni e tasse','Altro'];
@@ -920,6 +921,7 @@ function viewAltro(){
       <p class="hint num">${all.length?`${cnt('spesa')} spese, ${cnt('entrata')} entrate, ${cnt('investimento')} investimenti e ${cnt('trasferimento')} trasferimenti salvati, dal ${dayLabel(first).toLowerCase()} ${first.slice(0,4)}.`:'Ancora niente di salvato.'}</p></section>
     <section class="card stack"><div><h3>Importa da Excel o CSV</h3><p class="sub" style="margin:0">Va bene il tuo tracker_spese.xlsx o un file esportato da qui. Se le uscite sono in negativo, i positivi diventano entrate; le categorie della sezione Risparmio diventano investimenti. I movimenti già presenti vengono saltati.</p></div>
       <input type="file" id="file" accept=".xlsx,.xls,.csv,text/csv,text/plain">${prev}</section>
+    <p class="hint" style="text-align:center">Le mie spese · versione ${APP_VERSION}</p>
   </div>`;
 }
 
