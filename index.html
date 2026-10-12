@@ -87,9 +87,14 @@ button{cursor:pointer}
 .split i{display:block;height:100%}
 
 /* icons + rows */
-.ico{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex:none;line-height:1}
+/* le icone sono emoji: si usano le misure del font delle emoji (line-height normale), così restano centrate anche con le emoji Samsung */
+.ico{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex:none;line-height:normal;font-family:"Noto Color Emoji","Samsung Color Emoji","Apple Color Emoji","Segoe UI Emoji",var(--body);text-align:center}
 .ico.sm{width:36px;height:36px;border-radius:12px;font-size:18px}
-.ico.lg{width:56px;height:56px;border-radius:18px;font-size:28px}
+/* emoji come immagini (Fluent Emoji 3D): misura in proporzione al riquadro */
+.ico img.emo,.emojis img.emo{display:block;width:1.3em;height:1.3em;pointer-events:none}
+.emo-t{font-style:normal;display:inline-flex;align-items:center}
+.emo-t img.emo{width:1.3em;height:1.3em;display:block;pointer-events:none}
+.ico.ico-xl{width:56px;height:56px;border-radius:18px;font-size:28px}
 .clist{display:flex;flex-direction:column}
 .crow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 6px;border:0;background:none;text-align:left;border-radius:14px}
 .crow[aria-pressed="true"]{background:var(--accent-soft)}
@@ -183,7 +188,21 @@ button{cursor:pointer}
 .scrim.on{opacity:1}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;display:flex;justify-content:center;transform:translateY(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1)}
 .sheet.on{transform:none}
-.sheet form{background:var(--surface);width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;max-height:94vh;overflow-y:auto}
+.sheet form{background:var(--surface);width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;max-height:94vh;max-height:calc(100dvh - 12px);overflow-y:auto}
+/* nessun elemento del modulo si schiaccia: se lo spazio non basta, il modulo scorre (prima la griglia delle categorie spariva) */
+.sheet form>*{flex-shrink:0}
+#sheet .actions{position:sticky;bottom:0;background:var(--surface);padding-top:6px;z-index:1}
+#eTipo button{padding:7px 4px}
+#sheet .amt .ico.ico-xl{width:48px;height:48px;font-size:24px;border-radius:16px}
+#sheet .amt .val{font-size:40px}
+.opts{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
+.opts::-webkit-scrollbar{display:none}
+.opts .chip{flex:none;padding:6px 10px;font-size:13.5px;gap:5px}
+.opts .chip span{display:inline-block;max-width:6.8em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.opts .chip[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
+.panel .chips{padding-bottom:0}
+@keyframes need{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 2px var(--bad)}}
+.cgrid.need{animation:need .9s ease 2;border-radius:14px}
 .grip{width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center}
 #eTipo button[data-t="entrata"][aria-pressed="true"]{color:var(--income)}
 #eTipo button[data-t="investimento"][aria-pressed="true"]{color:var(--invest)}
@@ -195,22 +214,24 @@ button{cursor:pointer}
 .amt{display:flex;align-items:center;gap:12px}
 .amt .val{flex:1;min-width:0;text-align:right;font-family:var(--display);font-weight:700;font-size:44px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden}
 .amt .val small{font-size:26px;color:var(--muted);margin-right:4px}
+/* importo "selezionato": la prossima cifra lo sostituisce invece di accodarsi */
+.amt .val.sel .n{background:var(--accent-soft);border-radius:10px;padding:0 6px}
 .amt .val.in small{color:var(--income)}
 .amt .val.inv small{color:var(--invest)}
-.cgrid{display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:74px;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.cgrid{display:grid;grid-template-rows:repeat(2,auto);grid-auto-flow:column;grid-auto-columns:70px;gap:4px 6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
 .cgrid.one{grid-template-rows:auto}
-.ctile{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;border-radius:14px;padding:6px 2px;font-size:11px;font-weight:500;line-height:1.2}
+.ctile{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;border-radius:14px;padding:4px 2px;font-size:11px;font-weight:500;line-height:1.2}
 .ctile span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:center;width:100%}
 .ctile[aria-pressed="true"]{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
-.ctile .ico{width:42px;height:42px}
+.ctile .ico{width:38px;height:38px;font-size:19px}
 .ctile.add .ico{border:1.5px dashed var(--line);background:none;color:var(--accent)}
 .meta-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .meta-row .chip{padding:7px 12px}
 .meta-row input[type=date]{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 10px;font-size:14px}
 .check{display:flex;align-items:center;gap:10px;font-weight:500;font-size:14px}
 .check input{width:20px;height:20px;accent-color:var(--accent)}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.keys button{height:50px;border:0;border-radius:14px;background:var(--sunk);font-family:var(--display);font-size:24px;font-weight:500}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keys button{height:46px;border:0;border-radius:14px;background:var(--sunk);font-family:var(--display);font-size:24px;font-weight:500}
 .keys button:active{background:var(--line)}
 .actions{display:flex;gap:10px}
 .actions .btn{flex:1}
@@ -276,21 +297,28 @@ button{cursor:pointer}
   <form id="form" autocomplete="off">
     <div class="grip"></div>
     <div class="seg" id="eTipo"><button type="button" data-t="spesa">Spesa</button><button type="button" data-t="entrata">Entrata</button><button type="button" data-t="investimento">Investimento</button><button type="button" data-t="trasferimento">Trasferimento</button></div>
-    <div class="amt"><span class="ico lg" id="eIco">💶</span><div class="val num" id="eAmt" aria-live="polite"><small>€</small>0</div></div>
+    <div class="amt"><span class="ico ico-xl" id="eIco">💶</span><div class="val num" id="eAmt" aria-live="polite"><small>€</small>0</div></div>
     <div class="cgrid" id="eCats"></div>
     <div class="stack" id="eTrasf" hidden>
       <div class="meta-row"><span class="small tlbl">Da</span><div class="chips" id="eDa"></div></div>
       <div class="meta-row"><span class="small tlbl">A</span><div class="chips" id="eA"></div></div>
       <p class="hint" id="eTrasfHint" hidden>Per trasferire servono almeno due conti. Aggiungi per esempio “Contanti” nella pagina Patrimonio.</p>
     </div>
-    <div class="meta-row">
+    <div class="opts" id="eOpts">
+      <button type="button" class="chip" id="oData" data-panel="pData" aria-expanded="false"><i class="emo-t">📅</i> <span>Oggi</span></button>
+      <button type="button" class="chip" id="oConto" data-panel="pConto" aria-expanded="false" hidden>🏦 <span></span></button>
+      <button type="button" class="chip" id="oNota" data-panel="pNota" aria-expanded="false"><i class="emo-t">✏️</i> <span>Nota</span></button>
+    </div>
+    <div class="meta-row panel" id="pData" hidden>
       <button type="button" class="chip" data-d="0">Oggi</button>
       <button type="button" class="chip" data-d="1">Ieri</button>
       <input type="date" id="eDate" aria-label="Data">
     </div>
-    <div class="meta-row" id="eContoRow" hidden><span class="small" id="eContoLbl">Dal conto</span><div class="chips" id="eConti"></div></div>
-    <input class="inp" id="eNote" placeholder="Nota (facoltativa)" maxlength="120">
-    <label class="check" id="eRicL"><input type="checkbox" id="eRic"> Ripeti ogni mese (te lo ricordo nella pagina Mese)</label>
+    <div class="panel" id="pConto" hidden><div class="chips" id="eConti"></div></div>
+    <div class="panel stack" id="pNota" hidden style="gap:8px">
+      <input class="inp" id="eNote" placeholder="Nota (facoltativa)" maxlength="120">
+      <div class="meta-row"><button type="button" class="chip" id="oRic" aria-pressed="false"><i class="emo-t">🔁</i> Ripeti ogni mese</button><span class="small" id="oRicH">te lo ricordo nella pagina Mese</span></div>
+    </div>
     <div class="keys" id="keys">
       <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
       <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
@@ -309,7 +337,7 @@ button{cursor:pointer}
     <div class="grip"></div>
     <div class="label" id="cTitle">Nuova categoria</div>
     <div class="seg" id="cKind" hidden><button type="button" data-k="liquidita">Liquidità</button><button type="button" data-k="investimento">Investimento</button></div>
-    <div class="amt"><span class="ico lg" id="cPrev">📦</span><input class="inp" id="cName" placeholder="Nome" maxlength="40"></div>
+    <div class="amt"><span class="ico ico-xl" id="cPrev">📦</span><input class="inp" id="cName" placeholder="Nome" maxlength="40"></div>
     <div class="field"><span class="label">Icona</span><div class="emojis" id="cEmoji"></div></div>
     <div class="field"><span class="label">Colore</span><div class="swatches" id="cCols"></div></div>
     <label class="field" id="cBudgetF"><span class="label">Budget mensile (facoltativo)</span><input class="inp num" id="cBudget" inputmode="decimal" placeholder="es. 200"></label>
@@ -346,7 +374,7 @@ button{cursor:pointer}
 <script src="lib/chart.umd.js"></script>
 <script>
 /* ---------- constants ---------- */
-const APP_VERSION='3.1 (patrimonio unico, trasferimenti, impronta)';
+const APP_VERSION='3.2 (emoji Fluent 3D)';
 const SW=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#0f8b8d','#9a6b3f','#64748b','#c2410c'];
 const PAL={spesa:SW,entrata:['#1baf7a','#0f8b8d','#008300','#2a78d6','#eda100','#4a3aa7'],liquidita:['#2a78d6','#0f8b8d','#64748b','#1baf7a'],investimento:['#4a3aa7','#e87ba4','#eda100','#0f8b8d','#c2410c']};
 const DEF_NAMES=['Casa (affitto/mutuo)','Bollette','Spesa alimentare','Trasporti','Ristoranti e bar','Svago e hobby','Abbonamenti','Salute','Abbigliamento','Casa e arredo','Viaggi','Regali','Gatti','Commissioni e tasse','Altro'];
@@ -364,6 +392,25 @@ const GIORNI=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì'
 const HEAT=[['#cde2fb','#0b0b0b'],['#9ec5f4','#0b0b0b'],['#6da7ec','#0b0b0b'],['#2a78d6','#ffffff'],['#184f95','#ffffff']];
 const COL_SPESE='#2a78d6',COL_ENTRATE='#1baf7a';
 const TIPI={spesa:{w:'spesa',ws:'spese',cat:'categoria di spesa'},entrata:{w:'entrata',ws:'entrate',cat:'categoria di entrata'},investimento:{w:'investimento',ws:'investimenti',cat:'investimento'},liquidita:{w:'conto',ws:'conti',cat:'conto'},trasferimento:{w:'trasferimento',ws:'trasferimenti',cat:'trasferimento'}};
+
+/* ---------- emoji come immagini: Fluent Emoji 3D di Microsoft (licenza MIT, emoji/LICENSE.txt) ----------
+   Le emoji restano testo nei dati; al momento di mostrarle, nei riquadri delle icone (.ico), nei pulsantini (.emo-t)
+   e nella scelta dell'icona (.emojis) vengono sostituite dall'immagine emoji/<codice>.png, se esiste.
+   Le emoji senza immagine restano quelle del telefono. */
+const EMO_FILES=new Set('1f6d2,1f35e,1f969,1f355,2615,1f37a,1f37d,1f3e0,1f6cb,1f4a1,1f525,1f4a7,1f4f1,1f310,1f697,26fd,1f686,1f68c,2708,1f3d6,1f3ae,1f3ac,1f3b5,1f4da,1f3a8,26bd,1f4aa,1f48a,1fa7a,1f487,1f455,1f45f,1f381,1f408,1f415,1f476,1f393,1f4bc,1f9fe,1f3e6,1f4b3,1f4b6,1f501,1f4fa,1f6e0,1f331,1f6cd,1f4b0,1f4c8,1f437,1fa99,1f9d3,21a9,1f3f7,1f3c6,1f4e6,1f504,1f4c5,270f'.split(','));
+const emoCode=ch=>[...ch].map(c=>c.codePointAt(0).toString(16)).filter(h=>h!=='fe0f').join('-');
+const EMO_SEL='.ico,.emo-t,.emojis button';
+function emoImg(el){
+  if(el.childElementCount)return;
+  const t=el.textContent.trim(),c=t&&emoCode(t);
+  if(!c||!EMO_FILES.has(c))return;
+  const i=new Image();i.src='emoji/'+c+'.png';i.alt=t;i.className='emo';i.draggable=false;
+  el.textContent='';el.appendChild(i);
+}
+function emojify(n){if(n.nodeType!==1)return;if(n.matches(EMO_SEL))emoImg(n);n.querySelectorAll(EMO_SEL).forEach(emoImg)}
+new MutationObserver(ms=>{for(const m of ms){if(m.target.nodeType===1&&m.target.matches(EMO_SEL))emoImg(m.target);m.addedNodes.forEach(emojify)}})
+  .observe(document.body,{childList:true,subtree:true});
+emojify(document.body); // anche le emoji già scritte nella pagina (📅, 🔁 dei pulsantini)
 
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -552,6 +599,8 @@ async function init(){
 function render(){
   if(state.locked){charts.forEach(c=>c.destroy());charts=[];$('#main').innerHTML='';showLock(true);return}
   const v=state.view;
+  // pagine diverse da Mese: una voce nella cronologia, così "Indietro" riporta a Mese invece di uscire
+  if(v!=='mese'){if(!hist.includes('tab')&&hist[hist.length-1]!=='sheet')pushHist('tab')}else popHist('tab');
   $('#title').textContent=v==='altro'?'Altro':v==='patrimonio'?'Patrimonio':v==='categorie'?'Categorie · '+ymShort(state.mese,true):ymLabel(state.mese);
   $('#prev').hidden=$('#next').hidden=v==='altro'||v==='patrimonio';
   $('#fab').hidden=v==='altro'||v==='patrimonio';
@@ -696,7 +745,7 @@ function viewGrafici(){
 
   const legendRow=series.map(s=>`<span class="lg"><i class="sw" style="background:${s.col}"></i><span class="nm">${esc(s.nome)}</span></span>`).join('');
   const donutLegend=series.map(s=>{const v=S(s.vals);return `<span class="lg"><i class="sw" style="background:${s.col}"></i><span class="nm">${esc(s.nome)}</span><span class="vl num">${Math.round(v/ptot*100)}%</span></span>`}).join('');
-  const chips=ranked.map(n=>`<button class="chip" data-trend="${esc(n)}" aria-pressed="${state.catTrend===n}">${cat(n).icona} ${esc(n)}</button>`).join('');
+  const chips=ranked.map(n=>`<button class="chip" data-trend="${esc(n)}" aria-pressed="${state.catTrend===n}"><i class="emo-t">${cat(n).icona}</i> ${esc(n)}</button>`).join('');
   const trendTot=G.tots.reduce((s,t)=>s+(t[state.catTrend]||0),0);
 
   return `<div class="view">
@@ -928,8 +977,28 @@ function viewAltro(){
 
 /* ---------- sheets ---------- */
 const scrim=$('#scrim');
-function openS(el){clearTimeout(el._t);clearTimeout(scrim._t);scrim.hidden=false;el.hidden=false;void el.offsetWidth;scrim.classList.add('on');el.classList.add('on')}
-function closeS(el,keepScrim){el.classList.remove('on');el._t=setTimeout(()=>el.hidden=true,280);if(!keepScrim){scrim.classList.remove('on');scrim._t=setTimeout(()=>scrim.hidden=true,280)}}
+/* tasto "Indietro" di Android: invece di uscire dall'app chiude il riquadro aperto, oppure riporta alla pagina Mese.
+   Per ogni riquadro aperto (e per le pagine diverse da Mese) si aggiunge una voce alla cronologia del browser:
+   l'Indietro la consuma e qui la si traduce in "chiudi" / "torna a Mese". */
+const hist=[];let skipPop=0,fromBack=false;
+function pushHist(m){try{history.pushState({m},'');hist.push(m)}catch(_){}}
+function popHist(m){if(hist[hist.length-1]!==m)return;hist.pop();skipPop++;history.back()} // chiusura fatta dall'interfaccia: si toglie la voce aggiunta
+window.addEventListener('popstate',()=>{
+  if(skipPop){skipPop--;return}
+  const m=hist.pop();
+  if(m==='sheet'){
+    fromBack=true;
+    try{if(isOpen('#catSheet'))closeCat();else if(isOpen('#valSheet'))closeS($('#valSheet'));else if(isOpen('#sheet'))closeS($('#sheet'))}finally{fromBack=false}
+  }else if(m==='tab'&&state.view!=='mese'){state.view='mese';render();window.scrollTo(0,0)}
+});
+function openS(el){
+  if(hist[hist.length-1]!=='sheet')pushHist('sheet');
+  clearTimeout(el._t);clearTimeout(scrim._t);scrim.hidden=false;el.hidden=false;void el.offsetWidth;scrim.classList.add('on');el.classList.add('on');
+}
+function closeS(el,keepScrim){
+  el.classList.remove('on');el._t=setTimeout(()=>el.hidden=true,280);
+  if(!keepScrim){scrim.classList.remove('on');scrim._t=setTimeout(()=>scrim.hidden=true,280);if(!fromBack)popHist('sheet')}
+}
 const isOpen=id=>!$(id).hidden&&$(id).classList.contains('on');
 
 /* add/edit movement */
@@ -940,6 +1009,7 @@ function openExpense(item,tipo){
     :{tipo:tipo||'spesa',amt:'',cat:(!tipo||tipo==='spesa')?state.filtro||null:null,data:state.mese===cm?todayStr():state.mese+'-01',nota:'',editing:null,ric:false,conto:contoOf({}),contoA:null};
   if(!draft.contoA)draft.contoA=defaultDest(draft.conto);
   if(!draft.cat&&draft.tipo!=='spesa'&&listOf(draft.tipo).length===1)draft.cat=listOf(draft.tipo)[0].nome;
+  draft.repl=!!item; // modificando un movimento, la prima cifra sostituisce l'importo
   fillExpense();openS($('#sheet'));
 }
 function fillExpense(){
@@ -952,20 +1022,43 @@ function fillExpense(){
   $('#eDate').value=draft.data;$('#eNote').value=draft.nota;
   $('#eNote').placeholder=t==='entrata'?'Nota (facoltativa), es. stipendio ottobre':t==='investimento'?'Nota (facoltativa), es. versamento mensile':t==='trasferimento'?'Nota (facoltativa), es. prelievo bancomat':'Nota (facoltativa), es. Esselunga';
   $('#eDelete').hidden=!draft.editing;
-  $('#eRicL').hidden=!!draft.editing;$('#eRic').checked=draft.ric;
+  $('#oRic').parentElement.hidden=!!draft.editing;
   const L=liquidi(),tr=t==='trasferimento';
   $('#eCats').hidden=tr;$('#eTrasf').hidden=!tr;
   if(tr)renderTrasf();
-  $('#eContoRow').hidden=L.length<2||tr;
-  $('#eContoLbl').textContent=t==='entrata'?'Sul conto':'Dal conto';
-  $('#eConti').innerHTML=L.map(c=>`<button type="button" class="chip" data-conto-e="${esc(c.nome)}" aria-pressed="${c.nome===draft.conto}">${c.icona} ${esc(c.nome)}</button>`).join('');
+  $('#oConto').hidden=L.length<2||tr;
+  $('#eConti').innerHTML=L.map(c=>`<button type="button" class="chip" data-conto-e="${esc(c.nome)}" aria-pressed="${c.nome===draft.conto}"><i class="emo-t">${c.icona}</i> ${esc(c.nome)}</button>`).join('');
+  openPanel(null);
   updateExpense();
   const sel=$('#eCats [aria-pressed="true"]');if(sel)sel.scrollIntoView({block:'nearest',inline:'center'});
 }
+/* riga di pulsantini sotto le categorie: data, conto, nota, ripeti. Ognuno apre sotto il suo pannello (uno alla volta) */
+function updateOpts(){
+  const d=draft.data,lbl=d===todayStr()?'Oggi':d===todayStr(1)?'Ieri':shortDate(d);
+  $('#oData span').textContent=lbl;
+  const c=liquidi().find(x=>x.nome===draft.conto);
+  $('#oConto').innerHTML=`<i class="emo-t">${c?c.icona:'🏦'}</i> <span>${esc(c?c.nome:'Conto')}</span>`;
+  $('#oConto').setAttribute('aria-label',(draft.tipo==='entrata'?'Sul conto ':'Dal conto ')+(c?c.nome:''));
+  const n=($('#eNote').value||'').trim();
+  $('#oNota').innerHTML=`<i class="emo-t">✏️</i> <span>${esc(n||'Nota')}</span>${draft.ric?' <i class="emo-t">🔁</i>':''}`;
+  $('#oRic').setAttribute('aria-pressed',!!draft.ric);
+  document.querySelectorAll('#eOpts [data-panel]').forEach(b=>b.setAttribute('aria-expanded',!$('#'+b.dataset.panel).hidden));
+}
+function openPanel(id){
+  ['pData','pConto','pNota'].forEach(p=>{$('#'+p).hidden=p!==id});
+  if(draft)updateOpts();
+}
+$('#eOpts').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-panel]');if(!b)return;
+  const p=b.dataset.panel;openPanel($('#'+p).hidden?p:null);
+});
+$('#oRic').addEventListener('click',()=>{draft.ric=!draft.ric;updateOpts()});
+$('#eNote').addEventListener('input',()=>{draft.nota=$('#eNote').value;updateOpts()});
+
 /* trasferimento: conto di arrivo proposto (i contanti, se ci sono: è il caso del prelievo) */
 function defaultDest(from){const o=liquidi().filter(c=>c.nome!==from);return (o.find(c=>/contant/i.test(c.nome))||o[0]||{}).nome||null}
 function renderTrasf(){
-  const L=liquidi(),chips=(sel,attr)=>L.map(c=>`<button type="button" class="chip" ${attr}="${esc(c.nome)}" aria-pressed="${c.nome===sel}">${c.icona} ${esc(c.nome)}</button>`).join('');
+  const L=liquidi(),chips=(sel,attr)=>L.map(c=>`<button type="button" class="chip" ${attr}="${esc(c.nome)}" aria-pressed="${c.nome===sel}"><i class="emo-t">${c.icona}</i> ${esc(c.nome)}</button>`).join('');
   $('#eTrasfHint').hidden=L.length>=2;
   $('#eDa').innerHTML=chips(draft.conto,'data-da');$('#eA').innerHTML=chips(draft.contoA,'data-a');
 }
@@ -973,13 +1066,16 @@ function updateExpense(){
   const t=draft.tipo,tr=t==='trasferimento',c=tr?(draft.contoA?iconOf({tipo:t,contoA:draft.contoA}):null):draft.cat?cat(draft.cat,t):null;
   $('#eIco').textContent=c?c.icona:(t==='entrata'?'💰':t==='investimento'?'📈':tr?'🔄':'💶');$('#eIco').style.cssText=c?tint(c.colore):'background:var(--sunk)';
   $('#eAmt').className='val num '+amtCls(t);
-  $('#eAmt').innerHTML=`<small>${t==='entrata'?'+':''}€</small>${esc(draft.amt||'0')}`;
-  document.querySelectorAll('.meta-row [data-d]').forEach(b=>b.setAttribute('aria-pressed',draft.data===todayStr(+b.dataset.d)));
+  $('#eAmt').innerHTML=`<small>${t==='entrata'?'+':''}€</small><span class="n">${esc(draft.amt||'0')}</span>`;
+  $('#eAmt').classList.toggle('sel',!!(draft.repl&&draft.amt));
+  document.querySelectorAll('#pData [data-d]').forEach(b=>b.setAttribute('aria-pressed',draft.data===todayStr(+b.dataset.d)));
+  updateOpts();
   const cent=parseAmount(draft.amt),s=$('#eSave');
   s.textContent='Salva '+TIPI[t].w+(cent>0?` ${eur(cent)}`:'');
   s.className='btn'+(t==='entrata'?' inc':t==='investimento'?' invb':'');
 }
 function pressKey(k){
+  if(draft.repl){draft.repl=false;if(k==='del'){draft.amt='';updateExpense();return}draft.amt=''}
   let a=draft.amt;
   if(k==='del')a=a.slice(0,-1);
   else if(k===','){if(!a.includes(','))a=(a||'0')+','}
@@ -988,7 +1084,9 @@ function pressKey(k){
 }
 $('#eTipo').addEventListener('click',e=>{
   const b=e.target.closest('[data-t]');if(!b||b.dataset.t===draft.tipo)return;
-  draft.tipo=b.dataset.t;draft.nota=$('#eNote').value;draft.ric=$('#eRic').checked;
+  draft.tipo=b.dataset.t;draft.nota=$('#eNote').value;
+  // movimento nuovo: cambiando tipo si riparte da 0. Movimento salvato: l'importo resta, ma la prossima cifra lo sostituisce
+  if(draft.editing){if(draft.amt)draft.repl=true}else{draft.amt='';draft.repl=false}
   if(draft.cat&&!listOf(draft.tipo).some(c=>c.nome===draft.cat))draft.cat=null;
   if(!draft.cat&&draft.tipo!=='spesa'&&listOf(draft.tipo).length===1)draft.cat=listOf(draft.tipo)[0].nome;
   if(draft.tipo==='trasferimento'&&(!draft.contoA||draft.contoA===draft.conto))draft.contoA=defaultDest(draft.conto);
@@ -1001,14 +1099,14 @@ $('#eTrasf').addEventListener('click',e=>{
   renderTrasf();updateExpense();
 });
 $('#keys').addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(b)pressKey(b.dataset.k)});
-$('#eConti').addEventListener('click',e=>{const b=e.target.closest('[data-conto-e]');if(!b)return;draft.conto=b.dataset.contoE;document.querySelectorAll('#eConti [data-conto-e]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+$('#eConti').addEventListener('click',e=>{const b=e.target.closest('[data-conto-e]');if(!b)return;draft.conto=b.dataset.contoE;document.querySelectorAll('#eConti [data-conto-e]').forEach(x=>x.setAttribute('aria-pressed',x===b));openPanel(null)});
 $('#eCats').addEventListener('click',e=>{
-  if(e.target.closest('[data-newcat]')){draft.nota=$('#eNote').value;draft.ric=$('#eRic').checked;closeS($('#sheet'),true);openCat(null,draft.tipo,true);return}
+  if(e.target.closest('[data-newcat]')){draft.nota=$('#eNote').value;closeS($('#sheet'),true);openCat(null,draft.tipo,true);return}
   const b=e.target.closest('[data-c]');if(!b)return;draft.cat=b.dataset.c;
   document.querySelectorAll('#eCats [data-c]').forEach(x=>x.setAttribute('aria-pressed',x===b));updateExpense();
 });
-document.querySelectorAll('.meta-row [data-d]').forEach(b=>b.onclick=()=>{draft.data=todayStr(+b.dataset.d);$('#eDate').value=draft.data;updateExpense()});
-$('#eDate').onchange=e=>{if(e.target.value){draft.data=e.target.value;updateExpense()}};
+document.querySelectorAll('#pData [data-d]').forEach(b=>b.onclick=()=>{draft.data=todayStr(+b.dataset.d);$('#eDate').value=draft.data;openPanel(null);updateExpense()});
+$('#eDate').onchange=e=>{if(e.target.value){draft.data=e.target.value;openPanel(null);updateExpense()}};
 document.addEventListener('keydown',e=>{
   if(!isOpen('#sheet')||e.target.tagName==='INPUT')return;
   if(/^[0-9]$/.test(e.key))pressKey(e.key);else if(e.key===','||e.key==='.')pressKey(',');else if(e.key==='Backspace')pressKey('del');else if(e.key==='Escape')closeS($('#sheet'));else return;
@@ -1022,7 +1120,11 @@ $('#form').addEventListener('submit',async e=>{
     if(liquidi().length<2){toast('Servono almeno due conti: aggiungine uno nella pagina Patrimonio');return}
     if(!draft.conto||!draft.contoA||draft.conto===draft.contoA){toast('Scegli due conti diversi');return}
     draft.cat='Trasferimento';
-  }else if(!draft.cat){toast(t==='investimento'?'Scegli l’investimento':'Scegli una categoria');return}
+  }else if(!draft.cat){
+    toast(t==='investimento'?'Scegli l’investimento qui sopra':'Scegli una categoria qui sopra');
+    const g=$('#eCats');g.scrollIntoView({behavior:'smooth',block:'center'});g.classList.remove('need');void g.offsetWidth;g.classList.add('need');
+    return;
+  }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(draft.data)){toast('Scegli una data');return}
   const ed=draft.editing;
   const item={id:ed?ed.id:newId(),data:draft.data,cent,cat:draft.cat,nota:$('#eNote').value.trim(),ts:ed?ed.ts||Date.now():Date.now()};
@@ -1030,7 +1132,7 @@ $('#form').addEventListener('submit',async e=>{
   if(draft.conto)item.conto=draft.conto;
   if(t==='trasferimento')item.contoA=draft.contoA;
   if(ed&&ed.ric)item.ric=ed.ric;
-  const makeRic=!ed&&$('#eRic').checked;
+  const makeRic=!ed&&!!draft.ric;
   if(makeRic){const r={id:newId(),tipo:t,cat:item.cat,cent,nota:item.nota,giorno:+item.data.slice(8),dal:ymOf(item.data)};if(item.conto)r.conto=item.conto;if(item.contoA)r.contoA=item.contoA;state.ric.push(r);item.ric=r.id}
   closeS($('#sheet'));
   if(!ed&&ymOf(item.data)!==state.mese)state.mese=ymOf(item.data);
