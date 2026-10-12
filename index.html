@@ -15,7 +15,7 @@
 :root{
   --bg:#F2F4F7; --surface:#FFFFFF; --sunk:#EAEDF1; --ink:#111418; --muted:#5F6773; --faint:#8C939E; --line:#E1E5EA; --grid:#E9ECEF;
   --accent:#2A78D6; --accent-soft:#E2EDFB; --accent-ink:#FFFFFF;
-  --income:#0E8A5F; --invest:#4A3AA7; --liquid:#2A78D6;
+  --income:#0E8A5F; --invest:#4A3AA7; --liquid:#2A78D6; --on-income:#FFFFFF; --on-invest:#FFFFFF;
   --hero:#123A73; --hero2:#2B2266; --hero-ink:#FFFFFF; --hero-muted:#B8CBEA; --hero-chip:rgba(255,255,255,.14);
   --ring-track:rgba(255,255,255,.18); --ring-ok:#8FE3AE; --ring-warn:#FFD27A; --ring-bad:#FF9C9C;
   --good:#0E7F2C; --warn:#B07000; --bad:#CC3434;
@@ -27,13 +27,13 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0C0E11; --surface:#161A1F; --sunk:#20252C; --ink:#F1F3F6; --muted:#9AA3AF; --faint:#6F7782; --line:#272C33; --grid:#23282E;
   --accent:#4C93EA; --accent-soft:#1A2B44; --accent-ink:#FFFFFF;
-  --income:#3CC48E; --invest:#9085E9; --liquid:#4C93EA;
+  --income:#3CC48E; --invest:#9085E9; --liquid:#4C93EA; --on-income:#05261A; --on-invest:#120D38;
   --hero:#173E7B; --hero2:#2F2775; --hero-ink:#FFFFFF; --hero-muted:#AFC4E6; --hero-chip:rgba(255,255,255,.12);
   --good:#36C35E; --warn:#E5A646; --bad:#F06A6A; --shadow:none; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#0C0E11; --surface:#161A1F; --sunk:#20252C; --ink:#F1F3F6; --muted:#9AA3AF; --faint:#6F7782; --line:#272C33; --grid:#23282E;
   --accent:#4C93EA; --accent-soft:#1A2B44; --accent-ink:#FFFFFF;
-  --income:#3CC48E; --invest:#9085E9; --liquid:#4C93EA;
+  --income:#3CC48E; --invest:#9085E9; --liquid:#4C93EA; --on-income:#05261A; --on-invest:#120D38;
   --hero:#173E7B; --hero2:#2F2775; --hero-ink:#FFFFFF; --hero-muted:#AFC4E6; --hero-chip:rgba(255,255,255,.12);
   --good:#36C35E; --warn:#E5A646; --bad:#F06A6A; --shadow:none; color-scheme:dark }
 
@@ -166,8 +166,9 @@ button{cursor:pointer}
 .inline > input{flex:1;min-width:0}
 .inp{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;width:100%}
 .btn{border:0;border-radius:14px;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-ink)}
-.btn.inc{background:var(--income);color:#fff}
-.btn.invb{background:var(--invest);color:#fff}
+.btn.inc{background:var(--income);color:var(--on-income)}
+.btn.invb{background:var(--invest);color:var(--on-invest)}
+.inp.blur:not(:focus){color:transparent;text-shadow:0 0 9px var(--ink)}
 .btn.ghost{background:var(--sunk);color:var(--ink)}
 .btn.danger{background:none;color:var(--bad);border:1px solid var(--bad)}
 .btn.danger.armed{background:var(--bad);color:var(--surface)}
@@ -374,7 +375,7 @@ button{cursor:pointer}
 <script src="lib/chart.umd.js"></script>
 <script>
 /* ---------- constants ---------- */
-const APP_VERSION='3.2 (emoji Fluent 3D)';
+const APP_VERSION='3.3 (correzioni dalla revisione)';
 const SW=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#0f8b8d','#9a6b3f','#64748b','#c2410c'];
 const PAL={spesa:SW,entrata:['#1baf7a','#0f8b8d','#008300','#2a78d6','#eda100','#4a3aa7'],liquidita:['#2a78d6','#0f8b8d','#64748b','#1baf7a'],investimento:['#4a3aa7','#e87ba4','#eda100','#0f8b8d','#c2410c']};
 const DEF_NAMES=['Casa (affitto/mutuo)','Bollette','Spesa alimentare','Trasporti','Ristoranti e bar','Svago e hobby','Abbonamenti','Salute','Abbigliamento','Casa e arredo','Viaggi','Regali','Gatti','Commissioni e tasse','Altro'];
@@ -436,11 +437,14 @@ function dayLabel(d){const dt=new Date(d+'T12:00:00');return cap(GIORNI[dt.getDa
 function guessIcon(n,t='spesa'){n=String(n).toLowerCase();for(const[r,e]of HINTS[t]||[])if(r.test(n))return e;return DEF_ICON[t]||'📦'}
 function hashCol(n){let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))>>>0;return SW[h%SW.length]}
 const mkCat=(nome,i,t='spesa')=>({nome,icona:guessIcon(nome,t),colore:PAL[t][i%PAL[t].length],budget:0});
-const normCats=(a,t='spesa')=>a.map((c,i)=>typeof c==='string'?mkCat(c,i,t):{nome:String(c.nome),icona:c.icona||guessIcon(c.nome,t),colore:c.colore||PAL[t][i%PAL[t].length],budget:Number(c.budget)||0});
+/* icona e colore finiscono direttamente nella pagina: da un backup si accettano solo un'emoji e un colore #rrggbb */
+const okIco=e=>typeof e==='string'&&e&&e.length<=16&&!/[<>&"'`=\s]/.test(e)?e:null;
+const okCol=c=>typeof c==='string'&&/^#[0-9a-f]{3,8}$/i.test(c)?c:null;
+const normCats=(a,t='spesa')=>a.map((c,i)=>typeof c==='string'?mkCat(c,i,t):{nome:String(c.nome),icona:okIco(c.icona)||guessIcon(c.nome,t),colore:okCol(c.colore)||PAL[t][i%PAL[t].length],budget:Number(c.budget)||0});
 const dayEnd=d=>new Date(d+'T23:59:59').getTime();
 const normRef=r=>r&&/^\d{4}-\d{2}-\d{2}$/.test(r.data)&&Number.isFinite(+r.cent)?{data:r.data,cent:Math.round(+r.cent),ts:+r.ts||dayEnd(r.data)}:null;
 const normConti=a=>(a||[]).filter(c=>c&&c.nome).map((c,i)=>{const t=c.tipo==='investimento'?'investimento':'liquidita';
-  const o={nome:String(c.nome),tipo:t,icona:c.icona||guessIcon(c.nome,t),colore:c.colore||PAL[t][i%PAL[t].length],storico:Array.isArray(c.storico)?c.storico.map(normRef).filter(Boolean):[]};
+  const o={nome:String(c.nome),tipo:t,icona:okIco(c.icona)||guessIcon(c.nome,t),colore:okCol(c.colore)||PAL[t][i%PAL[t].length],storico:Array.isArray(c.storico)?c.storico.map(normRef).filter(Boolean):[]};
   if(t==='investimento')o.versatoIniziale=Math.max(0,Math.round(+c.versatoIniziale||0));
   return o});
 const tint=col=>`background:color-mix(in srgb, ${col} 18%, var(--surface))`;
@@ -457,7 +461,7 @@ function parseAmount(s){
 
 /* ---------- state ---------- */
 const state={mesi:{},cats:normCats(DEF_NAMES),catsIn:normCats(DEF_IN,'entrata'),ric:[],pat:{conti:[]},hide:false,budget:0,mese:ymOf(todayStr()),view:'mese',filtro:null,tipoF:'tutti',q:'',db:'loading',importPreview:null,period:'12',catTrend:null,calDay:null,catTab:'spesa'};
-state.lastBackup=null;state.persist=null;state.restore=null;
+state.lastBackup=null;state.persist=null;state.restore=null;state.rev=null;
 let writeChain=Promise.resolve(),charts=[],lastView=null;
 const tipoOf=v=>v.tipo==='entrata'||v.tipo==='investimento'||v.tipo==='trasferimento'?v.tipo:'spesa';
 const isIn=v=>v.tipo==='entrata';
@@ -508,29 +512,69 @@ const versatoTot=(date=todayStr(),all=allVoci())=>investimenti().reduce((s,c)=>s
 const pm=c=>state.hide?'••••• €':eur(c);
 const pm0=c=>state.hide?'••••• €':eur0(c);
 
-/* ---------- archivio locale: IndexedDB, i dati non lasciano mai questo dispositivo ---------- */
+/* ---------- archivio locale: IndexedDB, i dati non lasciano mai questo dispositivo ----------
+   Ogni scrittura salva anche un contrassegno di versione ("rev"). Se l'app è aperta in due finestre (scheda di Chrome
+   e app installata), una finestra con i dati vecchi in memoria se ne accorge e, invece di sovrascrivere, ricarica. */
 const IDB={db:null,
   open(){return new Promise((res,rej)=>{const r=indexedDB.open('le-mie-spese',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>rej(r.error)})},
   get(k){return new Promise((res,rej)=>{const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
-  set(k,v){return new Promise((res,rej)=>{const tx=this.db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)})}
+  set(k,v){return this.put({[k]:v})},
+  /* più chiavi nella stessa scrittura: o vengono salvate tutte o nessuna */
+  put(kv){
+    // archivio non letto correttamente: niente scritture, altrimenti un movimento nuovo prenderebbe il posto di tutto lo storico
+    if(state.db==='err'||!this.db)return Promise.reject(Object.assign(new Error('archivio non disponibile'),{name:'NoDbError'}));
+    return new Promise((res,rej)=>{
+      const tx=this.db.transaction('kv','readwrite'),st=tx.objectStore('kv'),rev=newId();let stale=false;
+      const g=st.get('rev');
+      g.onsuccess=()=>{if((g.result||null)!==(state.rev||null)){stale=true;tx.abort();return}for(const k in kv)st.put(kv[k],k);st.put(rev,'rev')};
+      tx.oncomplete=()=>{state.rev=rev;try{bc&&bc.postMessage(rev)}catch(_){}res()};
+      tx.onerror=tx.onabort=()=>rej(stale?Object.assign(new Error('dati cambiati altrove'),{name:'StaleError'}):tx.error);
+    });
+  }
 };
+const bc=(()=>{try{return new BroadcastChannel('le-mie-spese')}catch(_){return null}})();
 function chain(fn){const p=writeChain.then(fn);writeChain=p.catch(()=>{});return p}
-const fail=what=>e=>{toast(what+' non salvato: '+((e&&e.name)||'errore')+'. Riprova.');throw e};
+function writeErr(msg,e){
+  if(e&&e.name==='StaleError'){toast('Nel frattempo i dati sono cambiati in un’altra finestra dell’app: li ho ricaricati. Ripeti l’ultima modifica.');checkFresh();return}
+  toast(msg+(e&&e.name==='QuotaExceededError'?': la memoria del telefono è piena. Libera spazio e riprova.':e&&e.name==='NoDbError'?': chiudi e riapri l’app.':'. Riprova.'));
+}
+const fail=msg=>e=>{writeErr(msg,e);throw e};
 function saveMonth(ym,list){
   if(list.length)state.mesi[ym]=list;else delete state.mesi[ym];
   render();
-  return chain(()=>IDB.set('mesi',state.mesi)).catch(fail('Movimento'));
+  return chain(()=>IDB.set('mesi',state.mesi)).catch(fail('Movimento non salvato'));
 }
 const configData=()=>({categorie:state.cats,entrate:state.catsIn.map(({budget,...c})=>c),ricorrenti:state.ric,budget:state.budget,ultimoBackup:state.lastBackup});
-function saveConfig(){return chain(()=>IDB.set('config',configData())).catch(e=>toast('Impostazioni non salvate. Riprova.'))}
+function saveConfig(){return chain(()=>IDB.set('config',configData())).catch(fail('Impostazioni non salvate'))}
 function savePat(){
   render();
-  return chain(()=>IDB.set('patrimonio',{conti:state.pat.conti})).catch(e=>toast('Patrimonio non salvato. Riprova.'));
+  return chain(()=>IDB.set('patrimonio',{conti:state.pat.conti})).catch(fail('Patrimonio non salvato'));
 }
+/* salvataggi senza messaggio di riuscita (preferenze, blocco) */
+const savePref=(k,v)=>chain(()=>IDB.set(k,v)).catch(fail('Impostazione non salvata'));
+/* dati letti dall'archivio; usato all'avvio e quando un'altra finestra dell'app li ha cambiati */
+async function loadAll(){
+  const [m,c,p,pr,lk,rev]=await Promise.all(['mesi','config','patrimonio','prefs','lock','rev'].map(k=>IDB.get(k)));
+  state.mesi=m&&typeof m==='object'?m:{};
+  if(c)applyConfig(c);
+  const migrated=applyPat(p);
+  state.hide=!!(pr&&pr.nascondi);
+  state.lock=lk&&lk.credId?lk:null;
+  if(!state.lock)state.locked=false; // blocco tolto da un'altra finestra
+  state.rev=rev||null;
+  return migrated;
+}
+/* se un'altra finestra ha salvato qualcosa, ricarica i dati (in coda alle scritture di questa finestra) */
+function checkFresh(){
+  if(state.db!=='ok')return;
+  chain(async()=>{const r=await IDB.get('rev');if((r||null)!==state.rev){await loadAll();if(!state.lock)showLock(false);render()}}).catch(()=>{});
+}
+if(bc)bc.onmessage=()=>{if(!document.hidden)checkFresh()};
+const RIC_T=['spesa','entrata','investimento','trasferimento'];
 function applyConfig(v){
   state.cats=Array.isArray(v.categorie)&&v.categorie.length?normCats(v.categorie):normCats(DEF_NAMES);
   state.catsIn=Array.isArray(v.entrate)&&v.entrate.length?normCats(v.entrate,'entrata'):normCats(DEF_IN,'entrata');
-  state.ric=Array.isArray(v.ricorrenti)?v.ricorrenti.map(r=>({...r})):[];
+  state.ric=Array.isArray(v.ricorrenti)?v.ricorrenti.filter(r=>r&&r.id).map(r=>({...r,id:String(r.id),tipo:RIC_T.includes(r.tipo)?r.tipo:'spesa',cat:String(r.cat||''),giorno:Math.min(31,Math.max(1,Math.round(+r.giorno)||1)),cent:Math.round(+r.cent)||0})):[];
   state.budget=Number(v.budget)||0;
   state.lastBackup=v.ultimoBackup||null;
 }
@@ -564,7 +608,8 @@ async function materializeConti(){
 const saveFor=t=>t==='spesa'||t==='entrata'?saveConfig():savePat();
 async function upsert(item,oldYm){
   const ym=ymOf(item.data);
-  if(oldYm&&oldYm!==ym)await saveMonth(oldYm,voci(oldYm).filter(v=>v.id!==item.id).map(v=>({...v})));
+  // cambio di mese: tolto dal mese vecchio solo in memoria, poi un'unica scrittura con tutti e due i mesi
+  if(oldYm&&oldYm!==ym){const o=voci(oldYm).filter(v=>v.id!==item.id).map(v=>({...v}));if(o.length)state.mesi[oldYm]=o;else delete state.mesi[oldYm]}
   await saveMonth(ym,voci(ym).filter(v=>v.id!==item.id).map(v=>({...v})).concat(item));
 }
 async function remapCategory(from,to,t){
@@ -577,18 +622,18 @@ async function remapCategory(from,to,t){
 
 async function init(){
   render();
+  let migrated=false;
   try{
     await IDB.open();
-    const [m,c,p]=await Promise.all([IDB.get('mesi'),IDB.get('config'),IDB.get('patrimonio')]);
-    if(m)state.mesi=m;
-    if(c)applyConfig(c);
-    if(p&&applyPat(p))await IDB.set('patrimonio',{conti:state.pat.conti});
-    await materializeConti();
-    const pr=await IDB.get('prefs');if(pr)state.hide=!!pr.nascondi;
-    const lk=await IDB.get('lock');
-    if(lk&&lk.credId){state.lock=lk;state.locked=true}
+    migrated=await loadAll();
+    if(state.lock)state.locked=true;
     state.db='ok';
   }catch(e){state.db='err'}
+  // adattamenti dei dati delle versioni precedenti: se non riescono ora, si riprova alla prossima apertura
+  if(state.db==='ok')try{
+    if(migrated)await chain(()=>IDB.set('patrimonio',{conti:state.pat.conti}));
+    await materializeConti();
+  }catch(_){}
   render();
   if(state.locked)unlock();
   // chiede a Chrome di non cancellare mai i dati di questa app quando lo spazio scarseggia
@@ -596,6 +641,8 @@ async function init(){
 }
 
 /* ---------- render ---------- */
+/* "+ Aggiungi": non c'è in Altro e Patrimonio, né finché l'archivio non è stato letto */
+const fabHidden=()=>state.locked||state.db!=='ok'||state.view==='altro'||state.view==='patrimonio';
 function render(){
   if(state.locked){charts.forEach(c=>c.destroy());charts=[];$('#main').innerHTML='';showLock(true);return}
   const v=state.view;
@@ -603,7 +650,7 @@ function render(){
   if(v!=='mese'){if(!hist.includes('tab')&&hist[hist.length-1]!=='sheet')pushHist('tab')}else popHist('tab');
   $('#title').textContent=v==='altro'?'Altro':v==='patrimonio'?'Patrimonio':v==='categorie'?'Categorie · '+ymShort(state.mese,true):ymLabel(state.mese);
   $('#prev').hidden=$('#next').hidden=v==='altro'||v==='patrimonio';
-  $('#fab').hidden=v==='altro'||v==='patrimonio';
+  $('#fab').hidden=fabHidden();
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.view===v));
   charts.forEach(c=>c.destroy());charts=[];
   const html=state.db!=='ok'?`<div class="view">${statusCard()}</div>`:v==='mese'?viewMese():v==='grafici'?viewGrafici():v==='patrimonio'?viewPatrimonio():v==='categorie'?viewCategorie():viewAltro();
@@ -653,14 +700,14 @@ function viewMese(){
 
   const pend=pendingRic(ym);
   const ricCard=pend.length?`<section class="card"><div class="sec-h" style="padding:0 0 4px"><h2>Da registrare a ${mName(ym)}</h2>${pend.length>1?`<button class="link" data-ricall>Registra tutti</button>`:''}</div>
-    ${pend.map(r=>{const c=iconOf(r);return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||(r.tipo==='trasferimento'?trasfLabel(r):r.cat))}</b><span class="small">${cap(TIPI[r.tipo].w)} · ogni mese il giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="mini" data-ricdo="${r.id}">Registra</button></div>`}).join('')}</section>`:'';
+    ${pend.map(r=>{const c=iconOf(r);return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||(r.tipo==='trasferimento'?trasfLabel(r):r.cat))}</b><span class="small">${cap(TIPI[r.tipo].w)} · ogni mese il giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="mini" data-ricdo="${esc(r.id)}">Registra</button></div>`}).join('')}</section>`:'';
 
   if(!voci(ym).length)return `<div class="view">${hero}${ricCard}<div class="card empty"><strong>Niente a ${mName(ym)}</strong>Tocca “+ Aggiungi” per segnare una spesa, un’entrata o un investimento. Hai un backup o un file Excel? Lo carichi da Altro.</div></div>`;
 
   const left=inTot-tot-ivTot,rate=rateOf(inTot,tot);
   const tiles=`<div class="tiles">
     <button class="tile" data-tipof="entrata"><div class="label">Entrate</div><div class="v num in">${inTot?'+'+eur0(inTot):'—'}</div><div class="s">${en.length?`${en.length} ${en.length===1?'entrata':'entrate'}`:'tocca per aggiungerle'}</div></button>
-    <button class="tile" data-tipof="investimento"><div class="label">Investito</div><div class="v num inv">${ivTot?eur0(ivTot):'—'}</div><div class="s">${iv.length?(inTot?`${Math.round(ivTot/inTot*100)}% delle entrate`:`${iv.length} versamenti`):'nessun versamento'}</div></button>
+    <button class="tile" data-tipof="investimento"><div class="label">Investito</div><div class="v num inv">${ivTot?eur0(ivTot):'—'}</div><div class="s">${iv.length?(inTot?`${Math.round(ivTot/inTot*100)}% entrate`:`${iv.length} versamenti`):'nessun versamento'}</div></button>
     <div class="tile"><div class="label">Rimasto</div><div class="v num ${left<0?'neg':''}">${inTot?sgn0(left):'—'}</div><div class="s">${rate===null?'entrate − spese − investito':rate>=0?`risparmi il ${rate}%`:'spese oltre le entrate'}</div>${rate!==null&&rate>0?`<div class="rate"><i style="width:${Math.min(100,rate)}%"></i></div>`:''}</div></div>`;
 
   let cats='';
@@ -696,7 +743,7 @@ function listHtml(){
     <div class="rows">${g.items.map(v=>{const t=tipoOf(v),c=iconOf(v),tr=t==='trasferimento';
       const title=tr?(v.nota||trasfLabel(v)):(v.nota||v.cat);
       const sub=(tr?[v.nota?trasfLabel(v):'Trasferimento',v.ric?'ogni mese':'']:[v.nota?v.cat:'',multi?contoOf(v):'',v.ric?'ogni mese':'']).filter(Boolean).map(esc).join(' · ');
-      return `<button class="row" data-id="${v.id}"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span>
+      return `<button class="row" data-id="${esc(v.id)}"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span>
       <span class="tx"><span class="c">${esc(title)}</span>${sub?`<span class="n">${sub}</span>`:''}</span><span class="a num ${amtCls(t)}">${amtTxt(t,v.cent)}</span></button>`}).join('')}</div>`}).join('');
 }
 
@@ -860,19 +907,19 @@ function drawCharts(animate){
     const all=allVoci(),months=patMonths(),yrs=new Set(months.map(m=>m.slice(0,4))).size>1,cur=ymOf(todayStr());
     const labels=months.map(m=>m===cur?'oggi':ymShort(m,yrs)),dates=months.map(monthEnd);
     const liq=dates.map(d=>totale('liquidita',d,all)),inv=dates.map(d=>totale('investimento',d,all));
-    const tm=it=>{const m=months[it[0].dataIndex];return m===cur?'Oggi':'Fine '+mName(m)+' '+m.slice(0,4)};
+    const tm=it=>{if(!it.length)return '';const m=months[it[0].dataIndex];return m===cur?'Oggi':'Fine '+mName(m)+' '+m.slice(0,4)};
     if(el('chPat'))charts.push(new Chart(el('chPat'),{type:'bar',data:{labels,datasets:[
       {label:'Liquidità',data:liq.map(v=>v==null?null:v/100),backgroundColor:liqc,borderColor:surf,borderWidth:{top:2},borderRadius:4,borderSkipped:'bottom',maxBarThickness:30,stack:'p'},
       {label:'Investimenti',data:inv.map(v=>v==null?null:v/100),backgroundColor:invc,borderColor:surf,borderWidth:{top:2},borderRadius:4,borderSkipped:'bottom',maxBarThickness:30,stack:'p'}]},
       options:{...base,scales:{x:{...xAxis,stacked:true},y:{...yAxis,stacked:true}},plugins:{legend:{display:false},tooltip:{...tip,filter:c=>c.raw!=null,callbacks:{title:tm,label:c=>` ${c.dataset.label}: ${euro(c.raw)}`,
-        footer:it=>{const i=it[0].dataIndex;return 'Totale: '+euro(((liq[i]||0)+(inv[i]||0))/100)}}}}}}));
+        footer:it=>{if(!it.length)return '';const i=it[0].dataIndex;return 'Totale: '+euro(((liq[i]||0)+(inv[i]||0))/100)}}}}}}));
     if(el('chInv')){
       const vers=dates.map(d=>versatoTot(d,all)/100);
       charts.push(new Chart(el('chInv'),{type:'line',data:{labels,datasets:[
         {label:'Valore',data:inv.map(v=>v==null?null:v/100),borderColor:invc,backgroundColor:invc,borderWidth:2,pointRadius:3,pointHoverRadius:5,pointBorderColor:surf,pointBorderWidth:2,tension:.2,spanGaps:true},
         {label:'Versato',data:vers,borderColor:faint,borderDash:[5,4],borderWidth:1.5,pointRadius:0,pointHoverRadius:4,stepped:true}]},
         options:{...base,scales:{x:xAxis,y:yAxis},plugins:{legend:{display:false},tooltip:{...tip,filter:c=>c.raw!=null,callbacks:{title:tm,label:c=>` ${c.dataset.label}: ${euro(c.raw)}`,
-          footer:it=>{const i=it[0].dataIndex;if(inv[i]==null||!vers[i])return '';const g=inv[i]/100-vers[i];return `${g>=0?'Guadagno':'Perdita'}: ${euro(Math.abs(g))}`}}}}}}));
+          footer:it=>{if(!it.length)return '';const i=it[0].dataIndex;if(inv[i]==null||!vers[i])return '';const g=inv[i]/100-vers[i];return `${g>=0?'Guadagno':'Perdita'}: ${euro(Math.abs(g))}`}}}}}}));
     }
     return;
   }
@@ -886,9 +933,10 @@ function drawCharts(animate){
       {label:cap(mName(ym)),data:cum(ym,stop),borderColor:accent,backgroundColor:accent+'22',fill:'origin',borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.25},
       {label:cap(mName(prevYm)),data:cum(prevYm,daysIn(prevYm)),borderColor:faint,borderDash:[5,4],borderWidth:1.5,pointRadius:0,pointHoverRadius:4,tension:.25}]},
       options:{...base,scales:{x:{...xAxis,ticks:{...xAxis.ticks,maxTicksLimit:8}},y:yAxis},
-        plugins:{legend:{display:false},tooltip:{...tip,filter:c=>c.raw!=null,callbacks:{title:it=>'Giorno '+it[0].label,label:c=>` ${c.dataset.label}: ${euro(c.raw)}`}}}}}));
+        plugins:{legend:{display:false},tooltip:{...tip,filter:c=>c.raw!=null,callbacks:{title:it=>it.length?'Giorno '+it[0].label:'',label:c=>` ${c.dataset.label}: ${euro(c.raw)}`}}}}}));
   }
-  const titleM=it=>ymLabel(G.months[it[0].dataIndex]);
+  // con il filtro dei tooltip l'elenco può essere vuoto (es. un mese senza spese)
+  const titleM=it=>it.length?ymLabel(G.months[it[0].dataIndex]):'';
   const flow=el('chFlow');
   if(flow){
     const barO={borderRadius:3,borderSkipped:'bottom',maxBarThickness:12,categoryPercentage:.75,barPercentage:.9};
@@ -899,7 +947,7 @@ function drawCharts(animate){
       {label:'Investito',data:G.mv.map(v=>v/100),backgroundColor:invc,...barO}]},
       options:{...base,scales:{x:xAxis,y:yAxis},
         plugins:{legend:{display:false},tooltip:{...tip,callbacks:{title:titleM,label:c=>` ${c.dataset.label}: ${euro(c.raw)}`,
-          footer:it=>{const i=it[0].dataIndex,r=rateOf(G.mi[i],G.mt[i]);return r===null?'':`Risparmio: ${r}% delle entrate`}}}}}}));
+          footer:it=>{if(!it.length)return '';const i=it[0].dataIndex,r=rateOf(G.mi[i],G.mt[i]);return r===null?'':`Risparmio: ${r}% delle entrate`}}}}}}));
   }
   if(!el('chMonths'))return;
 
@@ -947,12 +995,13 @@ function viewAltro(){
   let prev='';
   if(p){
     const by=t=>p.items.filter(v=>tipoOf(v)===t);
-    const parts=[['spesa','spese'],['entrata','entrate'],['investimento','investimenti'],['trasferimento','trasferimenti']].map(([t,w])=>{const a=by(t);return a.length?`<b>${a.length}</b> ${w} (${eur(sum(a))})`:''}).filter(Boolean);
-    prev=`<div class="preview stack">${p.error?esc(p.error):`<div>${parts.length?`Trovati ${parts.join(', ')}, dal ${esc(p.from)} al ${esc(p.to)}.`:'Nessun movimento nuovo.'}${p.dup?` ${p.dup} già presenti, li salto.`:''}${p.skipped?` ${p.skipped} righe ignorate (senza data o importo).`:''}</div>
+    const parts=[['spesa','spese'],['entrata','entrate'],['investimento','investimenti'],['trasferimento','trasferimenti']].map(([t,w])=>{const a=by(t);return a.length?`<b>${a.length}</b> ${a.length===1?t:w} (${eur(sum(a))})`:''}).filter(Boolean);
+    prev=`<div class="preview stack">${p.error?esc(p.error):`<div>${parts.length?`Da importare: ${parts.join(', ')}, dal ${esc(p.from)} al ${esc(p.to)}.`:'Nessun movimento nuovo.'}${p.dup?` ${p.dup===1?'1 è già presente, lo salto':`${p.dup} sono già presenti, li salto`}.`:''}${p.skipped?` ${p.skipped===1?'1 riga ignorata':`${p.skipped} righe ignorate`} (senza una data valida o senza importo).`:''}</div>
+      ${p.noAcc&&p.noAcc.length?`<div>Nel file ci sono conti che qui non esistono (<b>${p.noAcc.map(esc).join(', ')}</b>): ${liquidi().length?`le loro spese ed entrate finiscono su ${esc(liquidi()[0].nome)}`:'le loro spese ed entrate non saranno collegate a nessun conto'}${p.trSkip?` e ${p.trSkip===1?'un trasferimento viene saltato':`${p.trSkip} trasferimenti vengono saltati`}`:''}. Per evitarlo, annulla, crea questi conti nella pagina Patrimonio con lo stesso nome e importa di nuovo.</div>`:p.trSkip?`<div>${p.trSkip===1?'Un trasferimento viene saltato':`${p.trSkip} trasferimenti vengono saltati`}: mancano i conti di partenza o di arrivo.</div>`:''}
       ${p.newCats.length?`<div>Nuove categorie o investimenti: ${p.newCats.map(c=>esc(c.nome)).join(', ')}</div>`:''}
       ${p.items.length?`<div class="inline"><button class="btn" id="doImport">Importa ${p.items.length} movimenti</button><button class="btn ghost" id="cancelImport">Annulla</button></div>`:''}`}</div>`;
   }
-  const ric=state.ric.length?state.ric.map(r=>{const c=iconOf(r),tr=r.tipo==='trasferimento';return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||(tr?trasfLabel(r):r.cat))}</b><span class="small">${cap(TIPI[r.tipo].w)} · ${esc(tr?trasfLabel(r):r.cat)} · giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="xbtn" data-ricdel="${r.id}" aria-label="Elimina ricorrente">×</button></div>`}).join('')
+  const ric=state.ric.length?state.ric.map(r=>{const c=iconOf(r),tr=r.tipo==='trasferimento';return `<div class="rrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(r.nota||(tr?trasfLabel(r):r.cat))}</b><span class="small">${cap(TIPI[r.tipo].w)} · ${esc(tr?trasfLabel(r):r.cat)} · giorno ${r.giorno}</span></span><span class="num ${amtCls(r.tipo)}" style="font-weight:600">${amtTxt(r.tipo,r.cent)}</span><button class="xbtn" data-ricdel="${esc(r.id)}" aria-label="Elimina ricorrente">×</button></div>`}).join('')
     :'<p class="hint">Nessuno. Quando aggiungi un movimento, spunta “Ripeti ogni mese” (utile per stipendio, affitto, abbonamenti, PAC).</p>';
   return `<div class="view">
     <section class="card stack"><div><h3>Budget mensile di spesa</h3><p class="sub" style="margin:0">Compare come anello nella pagina Mese. Lascia vuoto per non usarlo. I budget per singola categoria si impostano in Categorie.</p></div>
@@ -964,7 +1013,7 @@ function viewAltro(){
       <button class="btn" id="expJson">Fai il backup completo</button>
       <label class="field"><span class="label">Ripristina da un backup</span><input type="file" id="restoreFile"></label>
       <p class="hint">Scegli il file <b>backup-spese-….json</b> (di solito è nella cartella Download). Poi tocca “Sostituisci con il backup”.</p>
-      ${state.restore?`<div class="preview stack">${state.restore.error?esc(state.restore.error):`<div>Backup del ${new Date(state.restore.creato).toLocaleDateString('it-IT')}: <b>${state.restore.n}</b> ${state.restore.n===1?'movimento':'movimenti'} e <b>${state.restore.conti}</b> ${state.restore.conti===1?'conto':'conti'}. Ripristinandolo, i dati attuali di questa app vengono <b>sostituiti</b>.</div>
+      ${state.restore?`<div class="preview stack">${state.restore.error?esc(state.restore.error):`<div>Backup del ${new Date(state.restore.creato).toLocaleDateString('it-IT')}: <b>${state.restore.n}</b> ${state.restore.n===1?'movimento':'movimenti'} e <b>${state.restore.conti}</b> ${state.restore.conti===1?'conto':'conti'}. Ripristinandolo, i dati attuali di questa app vengono <b>sostituiti</b>${all.length||state.pat.conti.length?' (prima ne salvo una copia nei Download)':''}.</div>
         <div class="inline"><button class="btn danger armed" id="doRestore">Sostituisci con il backup</button><button class="btn ghost" id="cancelRestore">Annulla</button></div>`}</div>`:''}</section>
     <section class="card stack"><div><h3>Esporta in Excel</h3><p class="sub" style="margin:0">Un file .xlsx con tutti i tuoi dati: Movimenti (spese e investimenti in negativo, entrate in positivo), Riepilogo mensile, Patrimonio e Categorie.</p></div>
       <button class="btn ghost" id="expXlsx">Scarica il file Excel</button>
@@ -1114,6 +1163,7 @@ document.addEventListener('keydown',e=>{
 });
 $('#form').addEventListener('submit',async e=>{
   e.preventDefault();
+  if(!isOpen('#sheet'))return; // secondo tocco su "Salva" mentre il riquadro si chiude: niente doppione
   const cent=parseAmount(draft.amt),t=draft.tipo;
   if(!(cent>0)){toast('Scrivi un importo con il tastierino');return}
   if(t==='trasferimento'){
@@ -1171,12 +1221,13 @@ function fillCatSheet(){
   if(isConto){
     const v=acc?valueAt(acc):null,r=acc?lastRef(acc,todayStr()):null;
     $('#cSaldoL').textContent=t==='liquidita'?'Saldo di oggi':'Valore di mercato di oggi (facoltativo)';
-    $('#cSaldo').value='';$('#cSaldo').placeholder=v!=null?centStr(v):(t==='liquidita'?'es. 1250,00':'lascia vuoto se non lo sai');
+    $('#cSaldo').value='';$('#cSaldo').placeholder=v!=null?(state.hide?'•••••':centStr(v)):(t==='liquidita'?'es. 1250,00':'lascia vuoto se non lo sai');
     $('#cSaldoH').textContent=acc
-      ?(v!=null?`Secondo l’app oggi vale ${eur(v)}. Scrivi un importo solo per correggerlo.`:'Scrivi quanto c’è oggi sul conto: da qui l’app lo aggiorna da sola con i movimenti.')
+      ?(v!=null?`Secondo l’app oggi vale ${pm(v)}. Scrivi un importo solo per correggerlo.`:'Scrivi quanto c’è oggi sul conto: da qui l’app lo aggiorna da sola con i movimenti.')
       :(t==='liquidita'?'Quanto c’è oggi sul conto: da qui l’app lo aggiorna da sola con entrate, spese e investimenti.':'Se lo lasci vuoto, il valore è uguale a quanto hai versato.');
     if(t==='investimento'&&r)$('#cSaldoH').textContent+=` Ultimo valore inserito il ${shortDate(r.data)}.`;
     $('#cVers').value=cdraft.vers?centStr(cdraft.vers):'';
+    $('#cVers').classList.toggle('blur',state.hide); // importi nascosti: sfocato finché non lo tocchi
   }
   $('#cMove').hidden=!c;
   $('#cEmoji').innerHTML=(EMOJI.includes(cdraft.icona)?EMOJI:[cdraft.icona,...EMOJI.slice(0,-1)]).map(e=>`<button type="button" data-e="${e}" aria-pressed="${e===cdraft.icona}">${e}</button>`).join('');
@@ -1187,18 +1238,26 @@ function updateCatPrev(){$('#cPrev').textContent=cdraft.icona;$('#cPrev').style.
 function renderDelZone(){
   const z=$('#cDelZone');
   if(!cdraft.orig){z.innerHTML='';return}
-  const t=cdraft.tipo,n=t==='liquidita'?allVoci().filter(v=>tipoOf(v)!=='trasferimento'&&contoOf(v)===cdraft.orig).length:allVoci().filter(v=>v.cat===cdraft.orig&&tipoOf(v)===t).length;
+  const t=cdraft.tipo,o=cdraft.orig,n=t==='liquidita'?allVoci().filter(v=>tipoOf(v)!=='trasferimento'&&contoOf(v)===o).length:allVoci().filter(v=>v.cat===o&&tipoOf(v)===t).length;
+  // anche i movimenti ricorrenti collegati vanno spostati, altrimenti resterebbero legati a qualcosa che non esiste più
+  const nr=state.ric.filter(r=>r.tipo!=='trasferimento'&&(t==='liquidita'?contoOf(r)===o:r.tipo===t&&r.cat===o)).length;
   const w=t==='entrata'?'entrate':t==='investimento'?'versamenti':t==='liquidita'?'movimenti collegati':'spese';
   const label=t==='liquidita'||t==='investimento'?'Elimina':'Elimina categoria';
   if(!cdraft.armed){z.innerHTML=`<button type="button" class="btn danger" id="cDel" style="width:100%">${label}</button>`;return}
-  const others=listOf(t).filter(c=>c.nome!==cdraft.orig);
-  const nT=t==='liquidita'?allVoci().filter(v=>tipoOf(v)==='trasferimento'&&(v.conto===cdraft.orig||v.contoA===cdraft.orig)).length:0;
-  const vals=(t==='liquidita'||t==='investimento'?' Verranno cancellati anche i saldi inseriti.':'')+(nT?` ${nT===1?'Il trasferimento':`I ${nT} trasferimenti`} da o verso “${esc(cdraft.orig)}” ${nT===1?'verrà eliminato':'verranno eliminati'}.`:'');
-  if(t==='liquidita'&&n&&!others.length){z.innerHTML=`<p class="hint" style="margin-bottom:8px">È il tuo unico conto: i ${n} movimenti restano, ma non saranno più collegati a nessun conto.${vals}</p><button type="button" class="btn danger armed" id="cDelGo" style="width:100%">Conferma: elimina “${esc(cdraft.orig)}”</button>`;return}
-  if(!n||!others.length){z.innerHTML=n?`<p class="hint">Contiene ${n} ${w} ed è l’unico elemento di questo tipo: creane un altro prima di eliminarlo.</p>`:`<button type="button" class="btn danger armed" id="cDelGo" style="width:100%">Conferma: elimina “${esc(cdraft.orig)}”</button>${vals?`<p class="hint" style="margin-top:8px">${vals.trim()}</p>`:''}`;return}
+  const others=listOf(t).filter(c=>c.nome!==o),fem=t==='spesa'||t==='entrata';
+  const nT=t==='liquidita'?allVoci().filter(v=>tipoOf(v)==='trasferimento'&&(v.conto===o||v.contoA===o)).length:0;
+  const acc=state.pat.conti.find(c=>c.nome===o&&c.tipo===t);
+  const nRT=t==='liquidita'?state.ric.filter(r=>r.tipo==='trasferimento'&&(r.conto===o||r.contoA===o)).length:0;
+  const vals=(acc&&acc.storico.length?' Verranno cancellati anche i saldi inseriti.':'')+(nT?` ${nT===1?'Il trasferimento':`I ${nT} trasferimenti`} da o verso “${esc(o)}” ${nT===1?'verrà eliminato':'verranno eliminati'}.`:'')
+    +(nRT?` ${nRT===1?'Anche il trasferimento ricorrente collegato verrà eliminato':`Anche i ${nRT} trasferimenti ricorrenti collegati verranno eliminati`}.`:'');
+  const ricTxt=nr===1?'un movimento ricorrente':`${nr} movimenti ricorrenti`;
+  if(t==='liquidita'&&(n||nr)&&!others.length){z.innerHTML=`<p class="hint" style="margin-bottom:8px">È il tuo unico conto: ${n?`i ${n} movimenti`:'i movimenti ricorrenti'} restano, ma non saranno più collegati a nessun conto.${vals}</p><button type="button" class="btn danger armed" id="cDelGo" style="width:100%">Conferma: elimina “${esc(o)}”</button>`;return}
+  if(!(n||nr)||!others.length){z.innerHTML=n||nr?`<p class="hint">${n?`Contiene ${n} ${w}`:`È usat${fem?'a':'o'} da ${ricTxt}`} ed è l’unico elemento di questo tipo: creane un altro prima di eliminarlo.</p>`:`<button type="button" class="btn danger armed" id="cDelGo" style="width:100%">Conferma: elimina “${esc(o)}”</button>${vals?`<p class="hint" style="margin-top:8px">${vals.trim()}</p>`:''}`;return}
   const def=others.find(c=>/^altr/i.test(c.nome))||others[0];
-  const one={spese:'spesa',entrate:'entrata',versamenti:'versamento','movimenti collegati':'movimento collegato'}[w],fem=t==='spesa'||t==='entrata';
-  const frase=n===1?`C’è <b>1</b> ${one} in “${esc(cdraft.orig)}”. Dove ${fem?'la':'lo'} sposto?`:`Ci sono <b>${n}</b> ${w} in “${esc(cdraft.orig)}”. Dove ${fem?'le':'li'} sposto?`;
+  const one={spese:'spesa',entrate:'entrata',versamenti:'versamento','movimenti collegati':'movimento collegato'}[w];
+  const anche=nr?` Sposto lì anche ${nr===1?'il movimento ricorrente collegato':`i ${nr} movimenti ricorrenti collegati`}.`:'';
+  const frase=!n?`“${esc(o)}” è usat${fem?'a':'o'} da ${ricTxt}. Dove ${nr===1?'lo':'li'} sposto?`
+    :n===1?`C’è <b>1</b> ${one} in “${esc(o)}”. Dove ${fem?'la':'lo'} sposto?${anche}`:`Ci sono <b>${n}</b> ${w} in “${esc(o)}”. Dove ${fem?'le':'li'} sposto?${anche}`;
   z.innerHTML=`<div class="preview stack"><div>${frase}${vals}</div>
     <select class="inp" id="cMoveTo">${others.map(c=>`<option value="${esc(c.nome)}"${c===def?' selected':''}>${c.icona} ${esc(c.nome)}</option>`).join('')}</select>
     <button type="button" class="btn danger armed" id="cDelGo">Sposta ed elimina</button></div>`;
@@ -1211,7 +1270,7 @@ $('#cEmoji').addEventListener('click',e=>{const b=e.target.closest('[data-e]');i
 $('#cCols').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;cdraft.colore=b.dataset.s;document.querySelectorAll('#cCols button').forEach(x=>x.setAttribute('aria-pressed',x===b));updateCatPrev()});
 $('#cName').addEventListener('input',e=>{const base=DEF_ICON[cdraft.tipo];if(!cdraft.orig&&(cdraft.icona===base||cdraft.auto)){const g=guessIcon(e.target.value,cdraft.tipo);cdraft.icona=g;cdraft.auto=g!==base;updateCatPrev()}});
 $('#cCancel').onclick=closeCat;
-$('#cUp').onclick=()=>moveCat(-1);$('#cDown').onclick=()=>moveCat(1);
+$('#cUp').onclick=()=>moveCat(-1).catch(()=>{});$('#cDown').onclick=()=>moveCat(1).catch(()=>{});
 async function moveCat(d){
   const t=cdraft.tipo;
   if(t==='spesa'||t==='entrata'){const L=listOf(t),i=L.findIndex(c=>c.nome===cdraft.orig),j=i+d;if(i<0||j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];render();await saveConfig()}
@@ -1239,13 +1298,14 @@ $('#cDelZone').addEventListener('click',async e=>{
       await saveConfig();
     }else{
       state.pat.conti=state.pat.conti.filter(c=>!(c.nome===name&&c.tipo===t));
-      await savePat();if(to)await saveConfig();
+      await savePat();await saveConfig(); // i ricorrenti possono essere cambiati anche senza movimenti da spostare
     }
-    render();toast(to?`Eliminato. Movimenti spostati in ${to}`:'Eliminato');
+    render();toast(to?`Eliminato. Spostato tutto in ${to}`:'Eliminato');
   }catch(_){render()}
 });
 $('#catForm').addEventListener('submit',async e=>{
   e.preventDefault();
+  if(!isOpen('#catSheet'))return;
   const t=cdraft.tipo,isConto=t==='liquidita'||t==='investimento';
   const nome=$('#cName').value.trim().replace(/\s+/g,' ');
   if(!nome){toast('Scrivi un nome');$('#cName').focus();return}
@@ -1286,15 +1346,16 @@ function openVal(){
   const today=todayStr(),all=allVoci();
   const grp=(t,title)=>{const L=state.pat.conti.filter(c=>c.tipo===t);if(!L.length)return '';
     return `<div class="label">${title}</div>`+L.map(c=>{const v=valueAt(c,today,all),r=lastRef(c,today);
-      const info=t==='liquidita'?(v==null?'Saldo mai inserito':`Secondo l’app: ${eur(v)}`)
-        :`${r?`Valore stimato: ${eur(v)}`:'Valore di mercato mai inserito'} · versati ${eur0(versato(c,today,all))}`;
-      return `<label class="vrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(c.nome)}</b><span class="small num">${info}</span></span><input class="inp num" inputmode="decimal" data-acc="${esc(c.nome)}" data-tipo="${t}" placeholder="${v!=null?centStr(v):'0'}"></label>`}).join('')};
+      const info=t==='liquidita'?(v==null?'Saldo mai inserito':`Secondo l’app: ${pm(v)}`)
+        :`${r?`Valore stimato: ${pm(v)}`:'Valore di mercato mai inserito'} · versati ${pm0(versato(c,today,all))}`;
+      return `<label class="vrow"><span class="ico sm" style="${tint(c.colore)}">${c.icona}</span><span class="tx"><b>${esc(c.nome)}</b><span class="small num">${info}</span></span><input class="inp num" inputmode="decimal" data-acc="${esc(c.nome)}" data-tipo="${t}" placeholder="${v==null?'0':state.hide?'•••••':centStr(v)}"></label>`}).join('')};
   $('#vList').innerHTML=grp('liquidita','Liquidità: saldo di oggi')+grp('investimento','Investimenti: valore di mercato di oggi');
   openS($('#valSheet'));
 }
 $('#vCancel').onclick=()=>closeS($('#valSheet'));
 $('#valForm').addEventListener('submit',async e=>{
   e.preventDefault();
+  if(!isOpen('#valSheet'))return;
   const today=todayStr(),all=allVoci(),changes=[];let bad=false;
   document.querySelectorAll('#vList input[data-acc]').forEach(i=>{
     const raw=i.value.trim();if(!raw)return;
@@ -1307,8 +1368,8 @@ $('#valForm').addEventListener('submit',async e=>{
   closeS($('#valSheet'));
   if(!changes.length){toast('Nessun valore cambiato');return}
   changes.forEach(x=>addRef(x.acc,x.c));
-  await savePat();
-  const one=changes.length===1&&changes[0].before!=null&&changes[0].acc.tipo==='liquidita'?changes[0]:null;
+  try{await savePat()}catch(_){return}
+  const one=!state.hide&&changes.length===1&&changes[0].before!=null&&changes[0].acc.tipo==='liquidita'?changes[0]:null;
   toast(one?`${one.acc.nome}: ${one.c-one.before>0?'+':'−'}${eur(Math.abs(one.c-one.before))} rispetto al calcolo dell’app`:'Saldi e valori aggiornati');
 });
 
@@ -1332,9 +1393,11 @@ $('#main').addEventListener('click',async e=>{
   if(b=t.closest('[data-tipof]')){const k=b.dataset.tipof;if(!ofTipo(state.mese,k).length){openExpense(null,k);return}state.tipoF=k;state.filtro=null;render();const l=$('#list');if(l)l.scrollIntoView({behavior:'smooth',block:'start'});return}
   if(b=t.closest('[data-ricdo]')){const r=state.ric.find(x=>x.id===b.dataset.ricdo);if(r)registerRic([r]);return}
   if(t.closest('[data-ricall]')){registerRic(pendingRic(state.mese));return}
-  if(b=t.closest('[data-ricdel]')){const i=state.ric.findIndex(x=>x.id===b.dataset.ricdel);if(i<0)return;const [r]=state.ric.splice(i,1);await saveConfig();render();toast('Ricorrente eliminato',{label:'Annulla',fn:async()=>{state.ric.splice(i,0,r);await saveConfig();render()}});return}
+  if(b=t.closest('[data-ricdel]')){const i=state.ric.findIndex(x=>x.id===b.dataset.ricdel);if(i<0)return;const [r]=state.ric.splice(i,1);
+    try{await saveConfig()}catch(_){state.ric.splice(i,0,r);render();return}
+    render();toast('Ricorrente eliminato',{label:'Annulla',fn:async()=>{state.ric.splice(i,0,r);render();try{await saveConfig()}catch(_){}}});return}
   if(b=t.closest('.crow[data-edit]')){openCat(listOf(state.catTab).find(c=>c.nome===b.dataset.edit),state.catTab);return}
-  if(t.closest('[data-eye]')){state.hide=!state.hide;render();IDB.set('prefs',{nascondi:state.hide}).catch(()=>{});return}
+  if(t.closest('[data-eye]')){state.hide=!state.hide;render();savePref('prefs',{nascondi:state.hide}).catch(()=>{});return}
   if(b=t.closest('[data-conto]')){const c=state.pat.conti.find(x=>x.nome===b.dataset.conto);if(c)openCat(c,c.tipo);return}
   if(t.closest('[data-newconto]')){openCat(null,'liquidita',false,true);return}
   if(t.closest('[data-aggiorna]')){openVal();return}
@@ -1344,7 +1407,7 @@ $('#main').addEventListener('click',async e=>{
   if(b=t.closest('[data-period]')){state.period=b.dataset.period;lastView=null;render();return}
   if(b=t.closest('[data-trend]')){state.catTrend=b.dataset.trend;render();return}
   if(b=t.closest('[data-day]')){const d=+b.dataset.day;state.calDay=state.calDay===d?null:d;render();return}
-  if(t.id==='saveBudget'){const v=$('#budget').value.trim(),c=v?parseAmount(v):0;if(isNaN(c)){toast('Budget non valido');return}state.budget=c;await saveConfig();render();toast(c?'Budget salvato':'Budget rimosso');return}
+  if(t.id==='saveBudget'){const v=$('#budget').value.trim(),c=v?parseAmount(v):0;if(isNaN(c)){toast('Budget non valido');return}state.budget=c;render();try{await saveConfig()}catch(_){return}toast(c?'Budget salvato':'Budget rimosso');return}
   if(t.id==='expXlsx')return exportXlsx(t);
   if(t.id==='expJson'||t.closest('[data-backup]'))return exportJson();
   if(t.id==='doRestore')return doRestore();
@@ -1358,7 +1421,7 @@ $('#main').addEventListener('input',e=>{if(e.target.id==='q'){state.q=e.target.v
 $('#main').addEventListener('change',e=>{
   if(e.target.id==='file'&&e.target.files[0])readImport(e.target.files[0]);
   if(e.target.id==='restoreFile'&&e.target.files[0])readBackup(e.target.files[0]).then(()=>{const p=$('#main .preview');if(p)p.scrollIntoView({behavior:'smooth',block:'center'})});
-  if(e.target.id==='lockAfter'&&state.lock){state.lock.dopo=+e.target.value;IDB.set('lock',state.lock).then(()=>toast('Salvato'))}
+  if(e.target.id==='lockAfter'&&state.lock){state.lock.dopo=+e.target.value;savePref('lock',state.lock).then(()=>toast('Salvato'),()=>{})}
 });
 $('#main').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='budget')$('#saveBudget').click()});
 
@@ -1383,10 +1446,11 @@ async function exportXlsx(btn){
     U.book_append_sheet(wb,mov,'Movimenti');
     const months=Object.keys(state.mesi).filter(k=>voci(k).length).sort();
     const names=state.cats.map(c=>c.nome);all.forEach(v=>{if(tipoOf(v)==='spesa'&&!names.includes(v.cat))names.push(v.cat)});
-    const rows=months.map(m=>{const t=monthTotals(m),i=sum(entrate(m)),o=sum(spese(m)),n=sum(invest(m));return[ymLabel(m),i/100,o/100,n/100,(i-o-n)/100,i?(i-o)/i:'',...names.map(x=>(t[x]||0)/100)]});
-    const tot=k=>rows.reduce((s,r)=>s+(typeof r[k]==='number'?r[k]:0),0);
-    const ti=tot(1),to=tot(2);
-    const rie=U.aoa_to_sheet([['Mese','Entrate','Spese','Investito','Rimasto','Tasso di risparmio',...names],...rows,['Totale',ti,to,tot(3),tot(4),ti?(ti-to)/ti:'',...names.map((_,i)=>tot(i+6))]]);
+    // totali sommati in centesimi e divisi per 100 una volta sola (niente 1234,5600000000002)
+    const rc=months.map(m=>{const t=monthTotals(m);return{m,i:sum(entrate(m)),o:sum(spese(m)),n:sum(invest(m)),c:names.map(x=>t[x]||0)}});
+    const rows=rc.map(r=>[ymLabel(r.m),r.i/100,r.o/100,r.n/100,(r.i-r.o-r.n)/100,r.i?(r.i-r.o)/r.i:'',...r.c.map(x=>x/100)]);
+    const T=f=>rc.reduce((s,r)=>s+f(r),0),ti=T(r=>r.i),to=T(r=>r.o),tn=T(r=>r.n);
+    const rie=U.aoa_to_sheet([['Mese','Entrate','Spese','Investito','Rimasto','Tasso di risparmio',...names],...rows,['Totale',ti/100,to/100,tn/100,(ti-to-tn)/100,ti?(ti-to)/ti:'',...names.map((_,k)=>T(r=>r.c[k])/100)]]);
     fmt(rie,[1,2,3,4,...names.map((_,i)=>i+6)],1,money);fmt(rie,[5],1,'0%');
     rie['!cols']=[{wch:16},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},...names.map(n=>({wch:Math.max(11,n.length+2)}))];
     U.book_append_sheet(wb,rie,'Riepilogo mensile');
@@ -1422,14 +1486,16 @@ function saveFile(name,blob){
   a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),5000);
 }
-async function exportJson(){
+function backupBlob(){
   const {ultimoBackup,...config}=configData();
   const data={app:'le-mie-spese',versione:2,creato:new Date().toISOString(),mesi:state.mesi,config,patrimonio:{conti:state.pat.conti}};
-  try{
-    saveFile(`backup-spese-${todayStr()}.json`,new Blob([JSON.stringify(data)],{type:'application/json'}));
-    state.lastBackup=todayStr();await saveConfig();render();
-    toast('Backup salvato nei Download: copialo sul PC o su Drive');
-  }catch(e){toast('Backup non riuscito. Riprova.')}
+  return new Blob([JSON.stringify(data)],{type:'application/json'});
+}
+async function exportJson(){
+  try{saveFile(`backup-spese-${todayStr()}.json`,backupBlob())}catch(e){toast('Backup non riuscito. Riprova.');return}
+  state.lastBackup=todayStr();render();
+  toast('Backup salvato nei Download: copialo sul PC o su Drive');
+  saveConfig().catch(()=>{}); // solo la data dell'ultimo backup
 }
 async function readBackup(file){
   try{
@@ -1442,11 +1508,18 @@ async function readBackup(file){
 }
 async function doRestore(){
   const d=state.restore&&state.restore.d;if(!d)return;
-  state.mesi=d.mesi||{};applyConfig(d.config||{});applyPat(d.patrimonio);state.restore=null;state.filtro=null;
+  // prima di sostituire, una copia dei dati attuali nei Download: un backup sbagliato non fa perdere niente
+  let copia=false;
+  if(allVoci().length||state.pat.conti.length){try{saveFile(`backup-spese-prima-del-ripristino-${todayStr()}.json`,backupBlob());copia=true}catch(_){toast('Non riesco a salvare una copia dei dati attuali: ripristino annullato.');return}}
+  state.mesi=d.mesi&&typeof d.mesi==='object'?d.mesi:{};applyConfig(d.config||{});applyPat(d.patrimonio);state.restore=null;state.filtro=null;
   try{
-    await chain(()=>IDB.set('mesi',state.mesi));await saveConfig();await savePat();await materializeConti();
-    state.view='mese';render();window.scrollTo(0,0);toast('Backup ripristinato');
-  }catch(_){toast('Ripristino non riuscito. Riprova.')}
+    await chain(()=>IDB.put({mesi:state.mesi,config:configData(),patrimonio:{conti:state.pat.conti}})).catch(fail('Ripristino non riuscito'));
+    await materializeConti();
+    state.view='mese';render();window.scrollTo(0,0);toast(copia?'Backup ripristinato. I dati di prima sono nei Download.':'Backup ripristinato');
+  }catch(e){
+    // la memoria torna uguale all'archivio, così non sembra ripristinato quello che non è stato salvato
+    chain(()=>loadAll()).then(render,()=>{});
+  }
 }
 function backupAge(){if(!state.lastBackup)return null;return Math.floor((new Date(todayStr())-new Date(state.lastBackup))/864e5)}
 
@@ -1464,13 +1537,20 @@ function parseCsv(text){
   if(f||row.length){row.push(f);rows.push(row)}
   return [rows];
 }
+/* solo date che esistono davvero (niente 31/02 o mese 00) */
+const realDate=(y,m,d)=>{y=+y;m=+m;d=+d;if(!(y>=1970&&y<=2200&&m>=1&&m<=12&&d>=1))return null;const ym=y+'-'+pad(m);return d<=daysIn(ym)?ym+'-'+pad(d):null};
 function parseDate(v){
-  if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+pad(v.getMonth()+1)+'-'+pad(v.getDate());
-  if(typeof v==='number'&&v>20000&&v<80000){const d=new Date(Math.round((Math.floor(v)-25569)*864e5));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())}
+  if(v instanceof Date&&!isNaN(v))return realDate(v.getFullYear(),v.getMonth()+1,v.getDate());
+  if(typeof v==='number'&&v>20000&&v<80000){const d=new Date(Math.round((Math.floor(v)-25569)*864e5));return realDate(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate())}
   const s=String(v||'').trim();let m;
-  if(m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return m[1]+'-'+pad(m[2])+'-'+pad(m[3]);
-  if(m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;if(+m[2]>12)return null;return y+'-'+pad(m[2])+'-'+pad(m[1])}
+  if(m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return realDate(m[1],m[2],m[3]);
+  if(m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return realDate(y,m[2],m[1])}
   return null;
+}
+/* CSV: in UTF-8 oppure, se salvato da Excel, nella codifica di Windows (per le lettere accentate) */
+async function readText(file){
+  const buf=await file.arrayBuffer();
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(_){return new TextDecoder('windows-1252').decode(buf)}
 }
 async function readImport(file){
   state.importPreview=null;
@@ -1480,7 +1560,7 @@ async function readImport(file){
       toast('Leggo il file…');await loadXlsxLib();
       const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});
       sheets=wb.SheetNames.map(n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''}));
-    }else sheets=parseCsv(await file.text());
+    }else sheets=parseCsv(await readText(file));
     state.importPreview=buildPreview(sheets);
   }catch(e){state.importPreview={error:'Non riesco a leggere il file. Prova a salvarlo come CSV da Excel e riprova.'}}
   render();
@@ -1488,8 +1568,12 @@ async function readImport(file){
 function buildPreview(sheets){
   const RX={data:/^(data|giorno|date)\b/i,imp:/(importo|spesa|euro|€|costo|ammontare|prezzo|uscita|amount|totale)/i,cat:/(categoria|category)/i,tipo:/^tipo$/i,conto:/^conto$/i,contoA:/(verso|destinazione)/i,nota:/(nota|note|descrizione|dettaglio|causale|voce|cosa)/i};
   const key=v=>v.data+'|'+v.cent+'|'+v.cat.toLowerCase()+'|'+tipoOf(v);
-  const existing=new Set(allVoci().map(key));
-  const items=[],newCats=[];let skipped=0,dup=0,found=false;
+  /* quante volte ogni movimento è già nell'app: una riga del file uguale a uno di questi viene saltata, una volta per ognuno.
+     Così due caffè identici nello stesso giorno restano due, e reimportare lo stesso file non crea doppioni */
+  const existing=new Map();allVoci().forEach(v=>{const k=key(v);existing.set(k,(existing.get(k)||0)+1)});
+  const isDup=it=>{const k=key(it),n=existing.get(k)||0;if(n>0){existing.set(k,n-1);return true}return false};
+  const items=[],newCats=[],noAcc=new Set();let skipped=0,dup=0,trSkip=0,found=false;
+  const accName=n=>{n=String(n||'').trim();if(!n)return null;const x=liquidi().find(y=>y.nome.toLowerCase()===n.toLowerCase());if(!x)noAcc.add(n);return x?x.nome:null};
   // sezione di ogni categoria (Entrate / Spese / Risparmio), letta da una tabella Categoria/Sezione come il foglio Impostazioni
   const sec={};
   for(const rows of sheets)for(let r=0;r<Math.min(rows.length,15);r++){
@@ -1524,12 +1608,12 @@ function buildPreview(sheets){
       let c='';for(const i of col.cats){c=String(row[i]||'').trim();if(c)break}
       const s=sec[c.toLowerCase()],tc=col.tipo>=0?String(row[col.tipo]):'';
       if(/trasfer|giroconto|prelievo/i.test(tc)){
-        const f=n=>{n=String(n||'').trim().toLowerCase();const x=liquidi().find(y=>y.nome.toLowerCase()===n);return x?x.nome:null};
-        const da=col.conto>=0?f(row[col.conto]):null,a=col.contoA>=0?f(row[col.contoA]):null;
-        if(!da||!a||da===a){skipped++;continue}
+        // un trasferimento serve a qualcosa solo tra due conti che esistono già nell'app
+        const da=col.conto>=0?accName(row[col.conto]):null,a=col.contoA>=0?accName(row[col.contoA]):null;
+        if(!da||!a||da===a){trSkip++;continue}
         const it={id:newId(),data,cent,cat:'Trasferimento',nota:col.nota>=0?String(row[col.nota]).trim():'',ts:Date.now(),tipo:'trasferimento',conto:da,contoA:a};
-        if(existing.has(key(it))){dup++;continue}
-        existing.add(key(it));items.push(it);continue;
+        if(isDup(it)){dup++;continue}
+        items.push(it);continue;
       }
       let t=sg?(isNeg(row[col.imp])?'spesa':'entrata'):'spesa';
       if(/investiment/i.test(tc)||s==='investimento')t='investimento';
@@ -1540,28 +1624,27 @@ function buildPreview(sheets){
       if(known)c=known.nome;else if(!newCats.some(n=>n.nome===c&&n.tipo===t))newCats.push({nome:c,tipo:t});
       const nota=col.nota>=0?String(row[col.nota]).trim():'';
       const it={id:newId(),data,cent,cat:c,nota,ts:Date.now()};if(t!=='spesa')it.tipo=t;
-      const cn=col.conto>=0?String(row[col.conto]).trim().toLowerCase():'',lc=liquidi().find(x=>x.nome.toLowerCase()===cn);
-      const conto=lc?lc.nome:contoOf({});if(conto)it.conto=conto;
-      if(existing.has(key(it))){dup++;continue}
-      existing.add(key(it));items.push(it);
+      const conto=(col.conto>=0?accName(row[col.conto]):null)||contoOf({});if(conto)it.conto=conto;
+      if(isDup(it)){dup++;continue}
+      items.push(it);
     }
   }
   if(!found)return {error:'Non trovo le intestazioni. Nella prima riga servono almeno una colonna “Data” e una “Importo” (o “Spesa”, “Euro”).'};
   items.sort((a,b)=>a.data.localeCompare(b.data));
   const f=d=>{const[y,m,g]=d.split('-');return `${+g} ${MESI[m-1]} ${y}`};
-  return {items,newCats,skipped,dup,from:items.length?f(items[0].data):'',to:items.length?f(items[items.length-1].data):''};
+  return {items,newCats,skipped,dup,trSkip,noAcc:[...noAcc],from:items.length?f(items[0].data):'',to:items.length?f(items[items.length-1].data):''};
 }
 async function doImport(){
   const p=state.importPreview;if(!p||!p.items.length)return;
   const byM={};p.items.forEach(v=>(byM[ymOf(v.data)]=byM[ymOf(v.data)]||[]).push(v));
   const btn=$('#doImport');if(btn){btn.disabled=true;btn.textContent='Importo…'}
+  for(const ym of Object.keys(byM))state.mesi[ym]=voci(ym).map(v=>({...v})).concat(byM[ym]);
+  p.newCats.forEach(n=>{if(n.tipo==='investimento'){const k=listOf('investimento').length;state.pat.conti.push({nome:n.nome,tipo:'investimento',icona:guessIcon(n.nome,'investimento'),colore:PAL.investimento[k%PAL.investimento.length],storico:[],versatoIniziale:0})}else{const L=listOf(n.tipo);L.push(mkCat(n.nome,L.length,n.tipo))}});
   try{
-    for(const ym of Object.keys(byM).sort())await saveMonth(ym,voci(ym).map(v=>({...v})).concat(byM[ym]));
-    let cfg=false,pat=false;
-    p.newCats.forEach(n=>{if(n.tipo==='investimento'){const k=listOf('investimento').length;state.pat.conti.push({nome:n.nome,tipo:'investimento',icona:guessIcon(n.nome,'investimento'),colore:PAL.investimento[k%PAL.investimento.length]});pat=true}else{const L=listOf(n.tipo);L.push(mkCat(n.nome,L.length,n.tipo));cfg=true}});
-    if(cfg)await saveConfig();if(pat)await savePat();
+    // movimenti, categorie e investimenti nuovi in un'unica scrittura: o entra tutto o niente
+    await chain(()=>IDB.put({mesi:state.mesi,config:configData(),patrimonio:{conti:state.pat.conti}})).catch(fail('Importazione non riuscita'));
     toast(`Importati ${p.items.length} movimenti`);state.importPreview=null;state.mese=ymOf(p.items[p.items.length-1].data);state.view='mese';render();
-  }catch(_){render()}
+  }catch(_){chain(()=>loadAll()).then(render,()=>{})}
 }
 
 /* ---------- blocco con impronta: passkey del telefono (WebAuthn), la verifica la fa Android. Nessun server. ---------- */
@@ -1577,7 +1660,7 @@ async function verifyUser(){
   const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:b64u.dec(state.lock.credId)}],userVerification:'required',timeout:60000}});
   if(!(new Uint8Array(a.response.authenticatorData)[32]&4))throw new Error('verifica non eseguita');
 }
-function showLock(on){$('#lock').hidden=!on;if(on)$('#fab').hidden=true}
+function showLock(on){$('#lock').hidden=!on;$('#fab').hidden=on||fabHidden()}
 async function unlock(){
   if(unlocking||!state.lock)return;unlocking=true;$('#lockMsg').textContent='';
   try{await verifyUser();state.locked=false;showLock(false);render()}
@@ -1590,13 +1673,15 @@ async function enableLock(){
   try{
     const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Le mie spese',id:location.hostname},user:{id:rnd(16),name:'Le mie spese',displayName:'Le mie spese'},
       pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
-    state.lock={credId:b64u.enc(c.rawId),dopo:1};
-    await IDB.set('lock',state.lock);render();toast('Blocco attivato');
+    const lk={credId:b64u.enc(c.rawId),dopo:1};
+    try{await savePref('lock',lk)}catch(_){return}
+    state.lock=lk;render();toast('Blocco attivato');
   }catch(e){toast(e&&e.name==='NotAllowedError'?'Attivazione annullata':'Non sono riuscito ad attivare il blocco. Riprova.')}
 }
 async function disableLock(){
-  try{await verifyUser();state.lock=null;await IDB.set('lock',null);render();toast('Blocco disattivato')}
-  catch(_){toast('Verifica non riuscita: il blocco resta attivo')}
+  try{await verifyUser()}catch(_){toast('Verifica non riuscita: il blocco resta attivo');return}
+  try{await savePref('lock',null)}catch(_){return}
+  state.lock=null;render();toast('Blocco disattivato');
 }
 $('#unlockBtn').onclick=unlock;
 /* mentre è aperta la scelta di un file (backup, Excel) l'app va in secondo piano: al ritorno non va
@@ -1604,10 +1689,11 @@ $('#unlockBtn').onclick=unlock;
 let picking=0;
 document.addEventListener('click',e=>{if(e.target.matches&&e.target.matches('input[type=file]'))picking=Date.now()},true);
 document.addEventListener('visibilitychange',()=>{
-  if(!state.lock)return;
-  if(document.hidden){hiddenAt=Date.now();if(!state.locked)showLock(true);return} // copre i dati anche nell'anteprima delle app recenti
+  if(document.hidden){hiddenAt=Date.now();if(state.lock&&!state.locked)showLock(true);return} // copre i dati anche nell'anteprima delle app recenti
   const away=Date.now()-hiddenAt,choosing=picking&&Date.now()-picking<5*60000;
   picking=0;
+  if(!choosing)checkFresh(); // nel frattempo l'app può essere stata usata in un'altra finestra
+  if(!state.lock)return;
   if(state.locked)unlock();
   else if(!choosing&&away>=state.lock.dopo*60000){lockNow();unlock()}
   else showLock(false);
